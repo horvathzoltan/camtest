@@ -15,6 +15,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void on_radioButton_start_clicked();
+
+    void on_radioButton_stop_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

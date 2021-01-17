@@ -90,10 +90,12 @@ INCLUDEPATH += $$HOME/common
 DEPENDPATH += $$HOME/common
 
 SOURCES += \
+    camtest.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    camtest.h \
     mainwindow.h
 
 FORMS += \
