@@ -17,13 +17,16 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_radioButton_start_clicked()
 {
-    Camtest::Start();
+    setUi(Camtest::Start());
 }
 
 void MainWindow::on_radioButton_stop_clicked()
-{
-    Camtest::Stop();
+{    
+    setUi(Camtest::Stop());
 }
 
+void MainWindow::setUi(const Camtest::StartR& m){
+    //ui->label_txt
+}
 
-void setUI(){}
+void MainWindow::setUi(const Camtest::StopR& m){}

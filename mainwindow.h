@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "camtest.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -22,5 +23,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    void setUi(const Camtest::StartR&);
+    void setUi(const Camtest::StopR&);
 };
 #endif // MAINWINDOW_H

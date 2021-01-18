@@ -5,8 +5,10 @@
 class Camtest
 {
 public:
-    static void Start();
-    static void Stop();
+    struct StartR{};
+    static StartR Start();
+    struct StopR{};
+    static StopR Stop();
 };
 
 #endif // CAMTEST_H

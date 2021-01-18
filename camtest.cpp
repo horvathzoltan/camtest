@@ -1,4 +1,5 @@
 #include "camtest.h"
 
-void Camtest::Start(){}
-void Camtest::Stop(){};
+Camtest::StartR Camtest::Start(){return {};}
+
+Camtest::StopR Camtest::Stop(){return {};}
