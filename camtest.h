@@ -1,11 +1,14 @@
 #ifndef CAMTEST_H
 #define CAMTEST_H
 
+#include <QString>
 
 class Camtest
 {
 public:
-    struct StartR{};
+    struct StartR{
+        QString msg;
+    };
     static StartR Start();
     struct StopR{};
     static StopR Stop();

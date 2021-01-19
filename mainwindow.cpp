@@ -27,9 +27,10 @@ void MainWindow::on_radioButton_stop_clicked()
 }
 
 void MainWindow::setUi(const Camtest::StartR& m){
-    ui->label_txt->setText(zfn());
+
+    ui->label_txt->setText(m.msg);
 }
 
 void MainWindow::setUi(const Camtest::StopR& m){
-    ui->label_txt->setText(zfn());
+    ui->label_txt->setText(nameof_fn_full());
 }
