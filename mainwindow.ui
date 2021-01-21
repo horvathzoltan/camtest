@@ -99,9 +99,18 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="_pic">
+        <widget class="QLabel" name="label_pic">
+         <property name="maximumSize">
+          <size>
+           <width>360</width>
+           <height>640</height>
+          </size>
+         </property>
          <property name="text">
           <string>TextLabel</string>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
