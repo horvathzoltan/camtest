@@ -26,7 +26,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
-    com::helper::Downloader* _d;
+    bool _camera_active;
     void setUi(const Camtest::StartR&);
     void setUi(const Camtest::StopR&);
 };
