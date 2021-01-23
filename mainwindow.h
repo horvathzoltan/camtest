@@ -23,11 +23,14 @@ private slots:
 
     void on_radioButton_stop_clicked();
     void on_timer_timeout();
+    void on_pushButton_upload_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
     bool _camera_active;
     void setUi(const Camtest::StartR&);
     void setUi(const Camtest::StopR&);
+    void setUi(const Camtest::UploadR &m);
 };
 #endif // MAINWINDOW_H

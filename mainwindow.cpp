@@ -23,23 +23,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_radioButton_start_clicked()
 {
-    setUi(Camtest::Start());
-    if(_camera_active)
-    {
-        QByteArray b = Camtest::OpenCamera();
-        timer->start(16);
-    }
+    setUi(Camtest::Start());    
 }
 
 void MainWindow::on_radioButton_stop_clicked()
 {        
     auto m = Camtest::Stop();
     setUi(m);
-    if(_camera_active)
-    {
-        QByteArray b = Camtest::CloseCamera();
-    }
-
 }
 
 void MainWindow::on_timer_timeout()
@@ -59,14 +49,36 @@ void MainWindow::setUi(const Camtest::StartR& m){
     _camera_active = m.isActive;
     ui->label_txt->setText(m.msg);
     ui->label_serial->setText(m.serial);
-    timer->start(16);
+    if(_camera_active)
+    {
+        if(Camtest::OpenCamera()) timer->start(16);
+    }
 }
 
-void MainWindow::setUi(const Camtest::StopR& m){    
+void MainWindow::setUi(const Camtest::StopR& m){        
     timer->stop();
-    ui->label_txt->setText("");
-    ui->label_serial->setText("");
-    //ui->label_txt->setText(nameof_fn_full());
+    //ui->label_txt->setText("");
+    //ui->label_serial->setText("");
+    if(_camera_active)
+    {
+        Camtest::CloseCamera();
+    }
 }
 
 
+
+void MainWindow::on_pushButton_upload_clicked()
+{
+    if(!_camera_active)
+    {
+        ui->label_pic->setText("No active camera to upload.");
+    }
+    if(_camera_active && !timer->isActive())
+    {
+        setUi(Camtest::Upload("kurutty.txt"));
+    }
+}
+
+void MainWindow::setUi(const Camtest::UploadR& m){
+    ui->label_pic->setText(m.err);
+}

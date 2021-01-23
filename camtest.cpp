@@ -5,6 +5,7 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include "common/logger/log.h"
 
 com::helper::Downloader Camtest::_d = com::helper::Downloader(QStringLiteral("http://172.16.3.235:1997"));
 // ping cél ip
@@ -88,14 +89,16 @@ Camtest::StartR Camtest::Start(){
             QSqlError a = db.lastError();
             dberr = a.text().trimmed();
         }
-        db.removeDatabase("conn1");
+        db.close();
+
+
         append_value(&msg, db_ok);
         append_value(&msg, dberr);
         append_value(&msg, isNew);
         append_value(&msg, serial);
         append_value(&msg, rows);
     }
-
+    QSqlDatabase::removeDatabase("conn1");
 
     return {msg, serial, isActive};
 }
@@ -130,12 +133,59 @@ QPixmap Camtest::GetPixmap()
     return p;
 }
 
-void Camtest::Upload(const QString& fn)
+Camtest::UploadR Camtest::Upload(const QString& fn)
 {
+    if(!ActiveCamera()) return{"Camera not active"};
     QByteArray a(100, 0);
     for(int i=0;i<100;i++)a[i]=i;
 
     //fn = "kurutty.txt";
-    UploadMetaData("kurutty.txt", a.length());
+    //felküldjük, hogy mi fog átmenni
+    int maxlen = a.length();
+    int slen = 16;
 
+    auto key = UploadMetaData("kurutty.txt", maxlen);
+
+    if(key.isEmpty()){ zInfo("key is empty"); return {"key is empty"};}
+
+    zInfo("key:"+key);
+    //
+    bool hasNext=true;
+    int ix = 0;
+    //while(hasNext)
+    {
+        // UploadNext visszaküldi a fogadott length-t
+        ix = UploadNext(key); //ennyi ment át
+        auto len = maxlen-ix;// ennyi a küldendő
+        hasNext = len>0;
+        if(hasNext) // átment
+        {
+            auto data = a.mid(ix, (len>slen)?slen:len); // egy szegmens hosszt átküldünk
+            UploadData(key, data);
+        }
+    }
+    return {"ok"};
+}
+
+// minden fájl küldéskor kap egy kulcsot
+QString Camtest::UploadMetaData(const QString& fn, int len){
+    QString key = _d.download("upload_meta", "fn="+fn+"len="+QString::number(len));
+    return key;
+}
+
+void Camtest::UploadData(const QString& key, const QByteArray& data){
+    QString err;
+    _d.post("upload", "key="+key, &err, data);
+}
+
+// UploadNext visszaküldi a fogadott length-t
+//0: kezdődik
+//>0 folyamatben
+//-2 hiba volt, újra
+int Camtest::UploadNext(const QString& key){
+    QString b = _d.download("upload_length", "key="+key);
+    //b nem lehet busy, timeout vagy egyéb balgaság
+    bool ok;
+    int ix = b.toInt(&ok);
+    return ok?ix:-2;
 }
