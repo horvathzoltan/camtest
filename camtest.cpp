@@ -7,12 +7,12 @@
 #include <QSqlQuery>
 #include "common/logger/log.h"
 
-com::helper::Downloader Camtest::_d = com::helper::Downloader(QStringLiteral("http://172.16.3.235:1997"));
+com::helper::Downloader Camtest::_d = com::helper::Downloader(QStringLiteral("http://172.16.3.135:1997"));
 // ping cél ip
 // ha ok, akkor arp -a cél ip -> mac addr
 // ha ismeretlen mac
 Camtest::StartR Camtest::Start(){
-    QString cam_ip = QStringLiteral("172.16.3.235"); //beallitasok(ip)
+    QString cam_ip = QStringLiteral("172.16.3.135"); //beallitasok(ip)
     QString driver = "QODBC";//"QODBC";
     QString dbname = "BuildInfoFlex";
     QString dbhost = "172.16.1.5";//:1433";
