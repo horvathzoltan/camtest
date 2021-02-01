@@ -51,7 +51,7 @@ void MainWindow::setUi(const Camtest::StartR& m){
     ui->label_serial->setText(m.serial);
     if(_camera_active)
     {
-        if(Camtest::OpenCamera()) timer->start(16);
+        if(Camtest::OpenCamera()) timer->start(10);
     }
 }
 

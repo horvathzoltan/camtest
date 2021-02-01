@@ -32,7 +32,7 @@ public:
     };
     static UploadR Upload(const QString& fn);
 private:
-    static QByteArray GetPicture(){return Camtest::_d.download("get", "format=jpg20&mode=0");}
+    static QByteArray GetPicture(){return Camtest::_d.download("get", "format=jpeg&mode=0");}
 
     static QString UploadMetaData(const QString& fn, int len);
     static void UploadData(const QString& key, const QByteArray& a);
