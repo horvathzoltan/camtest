@@ -22,9 +22,9 @@ public:
     static QString NewSerial(const QSqlDatabase &db);
     static bool Ping(const QString &ip, int port=-1);
 
-    static bool OpenCamera(){return Camtest::_d.download("open", "")=="ok";}
+    static bool OpenCamera(){return Camtest::_d.download("set_cam_open", "")=="ok";}
     static bool ActiveCamera(){return Camtest::_d.download("active", "")=="active";}
-    static bool CloseCamera(){return Camtest::_d.download("close", "")=="ok";}
+    static bool CloseCamera(){return Camtest::_d.download("set_cam_close", "")=="ok";}
     static QPixmap GetPixmap();
     struct UploadR
     {
@@ -32,7 +32,7 @@ public:
     };
     static UploadR Upload(const QString& fn);
 private:
-    static QByteArray GetPicture(){return Camtest::_d.download("get", "format=jpeg&mode=0");}
+    static QByteArray GetPicture(){return Camtest::_d.download("get_pic", "format=jpeg&mode=0");}
 
     static QString UploadMetaData(const QString& fn, int len);
     static void UploadData(const QString& key, const QByteArray& a);
