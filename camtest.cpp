@@ -7,12 +7,12 @@
 #include <QSqlQuery>
 #include "common/logger/log.h"
 
-com::helper::Downloader Camtest::_d = com::helper::Downloader(QStringLiteral("http://172.16.3.135:1997"));
+com::helper::Downloader Camtest::_d = com::helper::Downloader(QStringLiteral("http://172.16.3.136:1997"));
 // ping cél ip
 // ha ok, akkor arp -a cél ip -> mac addr
 // ha ismeretlen mac
 Camtest::StartR Camtest::Start(){
-    QString cam_ip = QStringLiteral("172.16.3.135"); //beallitasok(ip)
+    QString cam_ip = QStringLiteral("172.16.3.136"); //beallitasok(ip)
     QString driver = "QODBC";//"QODBC";
     QString dbname = "BuildInfoFlex";
     QString dbhost = "172.16.1.5";//:1433";
@@ -50,7 +50,7 @@ Camtest::StartR Camtest::Start(){
     {
         QSqlDatabase db = QSqlDatabase::addDatabase(driver, "conn1");
         db.setHostName(dbhost);
-        db.setDatabaseName(QStringLiteral("DRIVER=/opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.6.so.1.1;Server=%1;Database=%2").arg(dbhost).arg(dbname));
+        db.setDatabaseName(QStringLiteral("DRIVER=/opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.7.so.1.1;Server=%1;Database=%2").arg(dbhost).arg(dbname));
         db.setUserName(user);
         db.setPassword(password);
         bool db_ok = db.open();
