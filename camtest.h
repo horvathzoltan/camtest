@@ -1,6 +1,7 @@
 #ifndef CAMTEST_H
 #define CAMTEST_H
 
+#include <QFileInfo>
 #include <QPixmap>
 #include <QSqlDatabase>
 #include <QString>
@@ -31,6 +32,8 @@ public:
         QString err;
     };
     static UploadR Upload(const QString& fn);
+    static QString GetDriverName();
+    static QFileInfo GetMostRecent(const QString &path, const QString &pattern);
 private:
     static QByteArray GetPicture(){return Camtest::_d.download("get_pic", "format=jpeg&mode=0");}
 

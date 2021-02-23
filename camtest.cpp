@@ -1,16 +1,46 @@
 #include "camtest.h"
 #include "common/helper/ProcessHelper/processhelper.h"
 #include "common/helper/string/stringhelper.h"
+#include <QDirIterator>
 #include <QRegularExpression>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include "common/logger/log.h"
 
-com::helper::Downloader Camtest::_d = com::helper::Downloader(QStringLiteral("http://172.16.3.136:1997"));
+com::helper::Downloader Camtest::_d(QStringLiteral("http://172.16.3.136:1997"));
 // ping cél ip
 // ha ok, akkor arp -a cél ip -> mac addr
 // ha ismeretlen mac
+
+QString Camtest::GetDriverName(){
+    auto driverdir = QStringLiteral("/opt/microsoft/msodbcsql17/lib64");
+    auto driverpattern = QStringLiteral("^.*libmsodbcsql-?[1-9.so]*$");
+    auto driverfi = GetMostRecent(driverdir, driverpattern);
+    if(!driverfi.isFile()) return QString();
+    return driverfi.absoluteFilePath();
+}
+
+QFileInfo Camtest::GetMostRecent(const QString& path, const QString& pattern)
+{
+    QFileInfo most_recent;
+    auto tstamp = QDateTime(QDate(1980,1,1));// ::currentDateTimeUtc().addYears(-1);//f1.lastModified();
+    QRegularExpression re(pattern);
+
+    QDirIterator it(path);
+    while (it.hasNext()) {
+        auto fn = it.next();
+        QFileInfo fi(fn);
+        if(!fi.isFile()) continue;
+        auto m = re.match(fn);
+        if(!m.hasMatch()) continue;
+
+        auto ts = fi.lastModified();
+        if(ts>tstamp){ tstamp=ts; most_recent = fi;}
+    }
+    return most_recent;
+}
+
 Camtest::StartR Camtest::Start(){
     QString cam_ip = QStringLiteral("172.16.3.136"); //beallitasok(ip)
     QString driver = "QODBC";//"QODBC";
@@ -39,7 +69,7 @@ Camtest::StartR Camtest::Start(){
     }    
 
     QString msg;
-    QString serial = "";
+    QString serial;
 
     append_value(&msg, cam_ip);
     append_value(&msg, mac);
@@ -48,9 +78,16 @@ Camtest::StartR Camtest::Start(){
     auto isDB = Ping(dbhost);
     if(isDB)
     {
-        QSqlDatabase db = QSqlDatabase::addDatabase(driver, "conn1");
+        QSqlDatabase db = QSqlDatabase::addDatabase(driver, QStringLiteral("conn1"));
         db.setHostName(dbhost);
-        db.setDatabaseName(QStringLiteral("DRIVER=/opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.7.so.1.1;Server=%1;Database=%2").arg(dbhost).arg(dbname));
+
+        int port = 1433;
+        auto driverfn = GetDriverName();
+        if(driverfn.isEmpty()) return {"no db driver error", "", 0};
+        db.setDatabaseName(QStringLiteral("DRIVER=%1;Server=%2,%3;Database=%4").arg(driverfn).arg(dbhost).arg(port).arg(dbname));
+
+
+        //db.setDatabaseName(QStringLiteral("DRIVER=/opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.7.so.1.1;Server=%1;Database=%2").arg(dbhost).arg(dbname));
         db.setUserName(user);
         db.setPassword(password);
         bool db_ok = db.open();
