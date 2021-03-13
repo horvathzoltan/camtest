@@ -53,6 +53,10 @@ void MainWindow::setUi(const Camtest::StartR& m){
     {
         if(Camtest::OpenCamera()) timer->start(10);
     }
+    setLabelB(m._settings.brightnest);
+    setLabelC(m._settings.contrast);
+    setLabelS(m._settings.saturation);
+    setLabelG(m._settings.gain);
 }
 
 void MainWindow::setUi(const Camtest::StopR& m){        
@@ -80,5 +84,50 @@ void MainWindow::on_pushButton_upload_clicked()
 }
 
 void MainWindow::setUi(const Camtest::UploadR& m){
-    ui->label_pic->setText(m.err);
+    ui->label_pic->setText(m.err);    
+}
+
+void MainWindow::setLabelB(int i){ ui->label_b->setText(QString::number(i));}
+void MainWindow::setLabelC(int i){ ui->label_c->setText(QString::number(i));}
+void MainWindow::setLabelS(int i){ ui->label_s->setText(QString::number(i));}
+void MainWindow::setLabelG(int i){ ui->label_g->setText(QString::number(i));}
+
+void MainWindow::on_pushButton_bp_clicked()
+{
+    setLabelB(Camtest::brightnest_p());
+}
+
+void MainWindow::on_pushButton_bm_clicked()
+{
+    setLabelB(Camtest::brightnest_m());
+}
+
+void MainWindow::on_pushButton_cp_clicked()
+{
+    setLabelC(Camtest::contrast_p());
+}
+
+void MainWindow::on_pushButton_cm_clicked()
+{
+    setLabelC(Camtest::contrast_m());
+}
+
+void MainWindow::on_pushButton_sm_clicked()
+{
+    setLabelS(Camtest::saturation_p());
+}
+
+void MainWindow::on_pushButton_sp_clicked()
+{
+    setLabelS(Camtest::saturation_m());
+}
+
+void MainWindow::on_pushButton_gp_clicked()
+{
+    setLabelG(Camtest::gain_p());
+}
+
+void MainWindow::on_pushButton_gm_clicked()
+{
+    setLabelG(Camtest::gain_m());
 }
