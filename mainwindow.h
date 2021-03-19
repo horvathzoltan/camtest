@@ -22,6 +22,7 @@ public:
     void setLabelC(int i);
     void setLabelS(int i);
     void setLabelG(int i);
+    void setLabelWB(int i);
 private slots:
     void on_radioButton_start_clicked();
 
@@ -44,6 +45,10 @@ private slots:
     void on_pushButton_gp_clicked();
 
     void on_pushButton_gm_clicked();
+
+    void on_pushButton_wbp_clicked();
+
+    void on_pushButton_wbm_clicked();
 
 private:
     Ui::MainWindow *ui;

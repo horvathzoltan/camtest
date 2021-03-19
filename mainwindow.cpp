@@ -91,6 +91,7 @@ void MainWindow::setLabelB(int i){ ui->label_b->setText(QString::number(i));}
 void MainWindow::setLabelC(int i){ ui->label_c->setText(QString::number(i));}
 void MainWindow::setLabelS(int i){ ui->label_s->setText(QString::number(i));}
 void MainWindow::setLabelG(int i){ ui->label_g->setText(QString::number(i));}
+void MainWindow::setLabelWB(int i){ ui->label_wb->setText(QString::number(i));}
 
 void MainWindow::on_pushButton_bp_clicked()
 {
@@ -130,4 +131,14 @@ void MainWindow::on_pushButton_gp_clicked()
 void MainWindow::on_pushButton_gm_clicked()
 {
     setLabelG(Camtest::gain_m());
+}
+
+void MainWindow::on_pushButton_wbp_clicked()
+{
+    setLabelWB(Camtest::wb_p());
+}
+
+void MainWindow::on_pushButton_wbm_clicked()
+{
+    setLabelWB(Camtest::wb_m());
 }

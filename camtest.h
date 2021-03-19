@@ -15,6 +15,7 @@ public:
         int contrast;
         int saturation;
         int gain;
+        int wb;
     };
 
     static com::helper::Downloader _d;
@@ -57,6 +58,8 @@ public:
     static int saturation_m();
     static int gain_p();
     static int gain_m();
+    static int wb_p();
+    static int wb_m();
 private:
     static QByteArray GetPicture(){return Camtest::_d.download("get_pic", "format=jpeg&mode=0");}
 

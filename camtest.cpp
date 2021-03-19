@@ -98,6 +98,20 @@ int Camtest::gain_m()
     GetCamSettings();
     return setCamSettings("gain",--_camSettings.gain);
 }
+/**/
+
+int Camtest::wb_p()
+{
+    GetCamSettings();
+    return setCamSettings("awb",++_camSettings.wb);
+}
+
+int Camtest::wb_m()
+{
+    GetCamSettings();
+    return setCamSettings("awb",--_camSettings.wb);
+}
+/**/
 
 Camtest::StartR Camtest::Start(){
     QString cam_ip = CamUrl.host();//QStringLiteral("172.16.3.103"); //beallitasok(ip)
@@ -213,12 +227,13 @@ bool Camtest::GetCamSettings()
     auto a = Camtest::_d.download("get_cam_settings", "");
     if(a.isEmpty()) return false;
     auto b = a.split(';');
-    if(b.length()<4) return false;
+    if(b.length()<5) return false;
     bool isok;
     _camSettings.brightnest=b[0].toInt(&isok);
     _camSettings.contrast=b[1].toInt(&isok);
     _camSettings.saturation=b[2].toInt(&isok);
     _camSettings.gain=b[3].toInt(&isok);
+    _camSettings.wb=b[4].toInt(&isok);
 
     return true;
 }
