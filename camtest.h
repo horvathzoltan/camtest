@@ -40,7 +40,16 @@ public:
     static bool ActiveCamera(){return Camtest::_d.download("active", "")=="active";}
     static bool GetCamSettings();
     static bool CloseCamera(){return Camtest::_d.download("set_cam_close", "")=="ok";}
-    static QPixmap GetPixmap();
+    static bool ClearCamSettings(int id);
+    static bool SetCalD(int id, qreal dmin, qreal dmax);
+    struct Status{
+        bool isValid = false;
+        bool isOpened;
+    };
+    static bool SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1);
+
+    static Status GetCamStatus();
+    static QPixmap GetPixmap(bool isMvis);
     struct UploadR
     {
         QString err;
@@ -60,8 +69,9 @@ public:
     static int gain_m();
     static int wb_p();
     static int wb_m();
+    static bool ClearCamSettings();
 private:
-    static QByteArray GetPicture(){return Camtest::_d.download("get_pic", "format=jpeg&mode=0");}
+    static QByteArray GetPicture(bool isMvis);
 
     static QString UploadMetaData(const QString& fn, int len);
     static void UploadData(const QString& key, const QByteArray& a);

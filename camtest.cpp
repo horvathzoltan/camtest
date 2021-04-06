@@ -10,7 +10,7 @@
 #include <QUrl>
 
 //QString Camtest::CamIp = QStringLiteral("http://172.16.3.103:1997");
-QUrl Camtest::CamUrl = QUrl(QStringLiteral("http://172.16.3.103:1997"));
+QUrl Camtest::CamUrl = QUrl(QStringLiteral("http://10.10.10.150:1997"));
 com::helper::Downloader Camtest::_d(CamUrl.toString());
 Camtest::CamSettings Camtest::_camSettings;
 // ping cél ip
@@ -121,15 +121,16 @@ Camtest::StartR Camtest::Start(){
     QString user = "sa";
     QString password= "Gtr7jv8fh2";
 
-    if(!Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", 0};
+    if(!Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", false,{}};
     auto isActive = ActiveCamera();
+
     GetCamSettings();
 
     auto cmd = QStringLiteral(R"(arp -a -n %1)").arg(cam_ip);
     auto out = com::helper::ProcessHelper::Execute(cmd);
     if(out.exitCode!=0) return {"arp error", "", 0, _camSettings};
     // ? (172.16.3.235) at dc:a6:32:74:92:dd [ether] on enp4s0
-    if(out.stdOut.isEmpty()) return {"no arp output", "", 0};
+    if(out.stdOut.isEmpty()) return {"no arp output", "", 0,{}};
 
     QString& x = out.stdOut;
     QRegularExpression re(QStringLiteral(R"(at\s+((?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})\s+)"));
@@ -238,6 +239,54 @@ bool Camtest::GetCamSettings()
     return true;
 }
 
+bool Camtest::ClearCamSettings(int id)
+{
+    auto a = Camtest::_d.download("set_td_d", "id=0&min=-1&max=-1");
+    a = Camtest::_d.download("set_td_field", "id=0&x1=-1&y1=-1&&x2=-1&y2=-1");
+    a = Camtest::_d.download("set_td_clearfc", "id=0");
+
+    //auto a = Camtest::_d.download("set_td_reset", "&id=0");
+
+    return true;
+}
+
+//set_td_d//id//min//max
+bool Camtest::SetCalD(int id, qreal dmin, qreal dmax)
+{    
+    auto q = QStringLiteral("id=%1&min=%2&max=%2").arg(id).arg(dmin).arg(dmax);
+    auto a = Camtest::_d.download("set_td_d", q);
+    return true;
+}
+
+//set_td_field//id//x1//y1//x2//y2
+
+bool Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1)
+{
+    auto q = QStringLiteral("id=%1&x1=%2&y1=%2&x2=%3&y2=%4").arg(id).arg(x0).arg(y0).arg(x1).arg(y1);
+    auto a = Camtest::_d.download("set_td_d", q);
+    return true;
+}
+
+//set_td_tracking
+//set_td_ftracking
+//set_td_clearfc
+//set_td_tryaddfc
+//set_td_replacefcs
+
+//isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval[ms];total[MB];free[MB]
+Camtest::Status Camtest::GetCamStatus()
+{
+    Camtest::Status s;
+    auto a = Camtest::_d.download("get_cam_status", "");
+    if(a.isEmpty()) return s;
+    auto b = a.split(';');
+    if(b.length()<9) return s;
+    s.isValid = true;
+    bool isok;
+    s.isOpened=b[0].toInt(&isok);
+    return s;
+}
+
 QString Camtest::NewSerial(const QSqlDatabase& db){
     QSqlQuery q(db);
     auto db_ok = q.exec(QStringLiteral("SELECT MAX(serial) AS maxserial FROM ManufacturingInfo"));
@@ -251,9 +300,17 @@ QString Camtest::NewSerial(const QSqlDatabase& db){
 
 Camtest::StopR Camtest::Stop(){return {};}
 
-QPixmap Camtest::GetPixmap()
+QByteArray Camtest::GetPicture(bool isMvis)
 {
-    QByteArray b = Camtest::GetPicture();
+    QString q("format=jpeg&mode=0");
+    if(isMvis) q+="&mvis";
+    return Camtest::_d.download("get_pic", q);
+}
+
+
+QPixmap Camtest::GetPixmap(bool isMvis)
+{
+    QByteArray b = Camtest::GetPicture(isMvis);
     QPixmap p;
     if(b.length()>100) p.loadFromData(b,"JPG");
     return p;

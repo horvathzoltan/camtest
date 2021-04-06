@@ -91,11 +91,13 @@ DEPENDPATH += $$HOME/common
 
 SOURCES += \
     camtest.cpp \
+    labeleventfilter.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     camtest.h \
+    labeleventfilter.h \
     mainwindow.h
 
 FORMS += \

@@ -3,8 +3,10 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QLabel>
 #include "camtest.h"
 #include "common/helper/downloader/downloader.h"
+#include "labeleventfilter.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,6 +25,22 @@ public:
     void setLabelS(int i);
     void setLabelG(int i);
     void setLabelWB(int i);
+
+    void on_fc_clicked(const QPoint &p);
+
+    struct DStatus
+    {
+        int round=0;
+        QPoint p0;
+        QPoint p1;
+        qreal w;
+    };
+    int ball_id = 1;
+
+    void on_d_clicked(const QPoint &p);
+    bool SetCamD();
+    void on_f_clicked(const QPoint &p);
+    bool SetCamF();
 private slots:
     void on_radioButton_start_clicked();
 
@@ -50,9 +68,12 @@ private slots:
 
     void on_pushButton_wbm_clicked();
 
+    void on_clicked(const QPoint &p);
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
+    LabelEventFilter* _eventFilter;
+    DStatus* _d_status=nullptr;
     bool _camera_active;
     void setUi(const Camtest::StartR&);
     void setUi(const Camtest::StopR&);
