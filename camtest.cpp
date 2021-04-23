@@ -2,16 +2,18 @@
 #include "common/helper/ProcessHelper/processhelper.h"
 #include "common/helper/string/stringhelper.h"
 #include <QDirIterator>
+#include <QNetworkInterface>
 #include <QRegularExpression>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QThread>
 #include "common/logger/log.h"
 #include <QUrl>
 
 //QString Camtest::CamIp = QStringLiteral("http://172.16.3.103:1997");
-QUrl Camtest::CamUrl = QUrl(QStringLiteral("http://172.16.3.103:1997"));
-com::helper::Downloader Camtest::_d(CamUrl.toString());
+QUrl Camtest::CamUrl;// = QUrl(QStringLiteral("http://172.16.3.103:1997"));
+com::helper::Downloader* Camtest::_d = nullptr;
 Camtest::CamSettings Camtest::_camSettings;
 // ping cél ip
 // ha ok, akkor arp -a cél ip -> mac addr
@@ -47,7 +49,8 @@ QFileInfo Camtest::GetMostRecent(const QString& path, const QString& pattern)
 
 int Camtest::setCamSettings(const QString& s, int i)
 {
-    Camtest::_d.download("set_cam_settings", s+'='+QString::number(i));
+    if(!_d) return -1;
+    Camtest::_d->download("set_cam_settings", s+'='+QString::number(i));
     return i;
 }
 
@@ -113,23 +116,69 @@ int Camtest::wb_m()
 }
 /**/
 
+QStringList Camtest::GetIp(int i1, int i2, int p)
+{
+    if(i1<1||i1>255) return {};
+    if(i2<1||i2>255) return {};
+    if(i1>i2) return {};
+    if(p<1||p>UINT16_MAX) return {};
+
+    auto cmd = QStringLiteral(R"(nmap -Pn -p%3 --open 10.10.10.%1-%2)").arg(i1).arg(i2).arg(p);
+    auto out = com::helper::ProcessHelper::Execute(cmd);
+    if(out.exitCode) return {};
+
+    static const QRegularExpression r(R"(Nmap scan report for\s+(?:\S+\s+)?\(?([0-9\.]+)\)?)");
+    auto mi = r.globalMatch(out.stdOut);
+
+    QStringList e;
+    while (mi.hasNext())
+    {
+        auto a = mi.next().captured(1);
+        e.append(a);
+    }
+
+    return e;
+}
+
+void Camtest::FilterLocalIp(QStringList *l)
+{
+    auto lip = QNetworkInterface::allAddresses();
+
+    for(auto&i:lip) l->removeAll(i.toString());
+}
+
+
 Camtest::StartR Camtest::Start(){
-    QString cam_ip = CamUrl.host();//QStringLiteral("172.16.3.103"); //beallitasok(ip)
+    int cam_p = 1997;
+    auto iplist=GetIp(100,155,cam_p);
+    FilterLocalIp(&iplist);
+
+    QString cam_ip;
+
+    if(iplist.count()>0) cam_ip= iplist[0];
+    else cam_ip=QStringLiteral("10.10.10.150");//CamUrl.host();//QStringLiteral("172.16.3.103"); //beallitasok(ip)
+
+    CamUrl = QUrl(QStringLiteral("http://%1:%2").arg(cam_ip).arg(cam_p));
+
+    if(_d) delete _d;
+    _d = new com::helper::Downloader(CamUrl.toString());
+
     QString driver = "QODBC";//"QODBC";
     QString dbname = "BuildInfoFlex";
     QString dbhost = "172.16.1.5";//:1433";
     QString user = "sa";
     QString password= "Gtr7jv8fh2";
 
-    if(!Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", 0};
-    auto isActive = ActiveCamera();
+    if(!Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", 0, "",{}};
+    auto isActive = DeviceActive();
+    auto version = DeviceVersion();
     GetCamSettings();
 
     auto cmd = QStringLiteral(R"(arp -a -n %1)").arg(cam_ip);
     auto out = com::helper::ProcessHelper::Execute(cmd);
-    if(out.exitCode!=0) return {"arp error", "", 0, _camSettings};
+    if(out.exitCode!=0) return {"arp error", "", 0, version,_camSettings};
     // ? (172.16.3.235) at dc:a6:32:74:92:dd [ether] on enp4s0
-    if(out.stdOut.isEmpty()) return {"no arp output", "", 0};
+    if(out.stdOut.isEmpty()) return {"no arp output", "", 0, version, {}};
 
     QString& x = out.stdOut;
     QRegularExpression re(QStringLiteral(R"(at\s+((?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})\s+)"));
@@ -156,7 +205,7 @@ Camtest::StartR Camtest::Start(){
 
         int port = 1433;
         auto driverfn = GetDriverName();
-        if(driverfn.isEmpty()) return {"no db driver error", "", 0, _camSettings};
+        if(driverfn.isEmpty()) return {"no db driver error", "", 0,version, _camSettings};
         db.setDatabaseName(QStringLiteral("DRIVER=%1;Server=%2,%3;Database=%4").arg(driverfn).arg(dbhost).arg(port).arg(dbname));
 
 
@@ -207,10 +256,11 @@ Camtest::StartR Camtest::Start(){
         append_value(&msg, isNew);
         append_value(&msg, serial);
         append_value(&msg, rows);
+        append_value(&msg, version);
     }
     QSqlDatabase::removeDatabase("conn1");
 
-    return {msg, serial, isActive, _camSettings};
+    return {msg, serial, isActive, version, _camSettings};
 }
 
 bool Camtest::Ping(const QString& ip, int port){
@@ -224,7 +274,7 @@ bool Camtest::Ping(const QString& ip, int port){
 
 bool Camtest::GetCamSettings()
 {
-    auto a = Camtest::_d.download("get_cam_settings", "");
+    auto a = _d->download("get_cam_settings", "");
     if(a.isEmpty()) return false;
     auto b = a.split(';');
     if(b.length()<5) return false;
@@ -261,7 +311,7 @@ QPixmap Camtest::GetPixmap()
 
 Camtest::UploadR Camtest::Upload(const QString& fn)
 {
-    if(!ActiveCamera()) return{"Camera not active"};
+    if(!DeviceActive()) return{"Camera not active"};
     QByteArray a(100, 0);
     for(int i=0;i<100;i++)a[i]=i;
 
@@ -295,13 +345,13 @@ Camtest::UploadR Camtest::Upload(const QString& fn)
 
 // minden fájl küldéskor kap egy kulcsot
 QString Camtest::UploadMetaData(const QString& fn, int len){
-    QString key = _d.download("upload_meta", "fn="+fn+"len="+QString::number(len));
+    QString key = _d->download("upload_meta", "fn="+fn+"len="+QString::number(len));
     return key;
 }
 
 void Camtest::UploadData(const QString& key, const QByteArray& data){
     QString err;
-    _d.post("upload", "key="+key, &err, data);
+    _d->post("upload", "key="+key, &err, data);
 }
 
 // UploadNext visszaküldi a fogadott length-t
@@ -309,9 +359,52 @@ void Camtest::UploadData(const QString& key, const QByteArray& data){
 //>0 folyamatben
 //-2 hiba volt, újra
 int Camtest::UploadNext(const QString& key){
-    QString b = _d.download("upload_length", "key="+key);
+    QString b = _d->download("upload_length", "key="+key);
     //b nem lehet busy, timeout vagy egyéb balgaság
     bool ok;
     int ix = b.toInt(&ok);
     return ok?ix:-2;
+}
+
+
+Camtest::UpdateR Camtest::Update()
+{
+    QString msg;
+
+    auto a = DeviceActive();
+    if(!a)
+    {
+        com::helper::StringHelper::AppendLine(&msg, "not active");
+        return {false, msg};
+    }
+
+    auto v_old = DeviceVersion();
+
+    append_value(&msg, v_old);
+
+    auto updstatus = DeviceUpdateStorageStatus();
+    if(!updstatus) updstatus=DeviceMountStorage();
+    if(!updstatus){
+        com::helper::StringHelper::AppendLine(&msg, "cannot mount");
+        return {false, msg};
+    }
+
+    DeviceUpdate();
+
+    int i;
+    QString v_new;
+    bool isok;
+    for(i=0;i<10;i++)
+    {
+        QThread::sleep(3);
+        v_new = DeviceVersion();
+        if(v_new.isEmpty()) continue;
+        isok = v_new!=v_old;
+        if(isok) break;
+    }
+
+    append_value(&msg, v_new);
+    append_value(&msg, i);
+
+    return {isok, msg};
 }

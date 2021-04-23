@@ -142,3 +142,15 @@ void MainWindow::on_pushButton_wbm_clicked()
 {
     setLabelWB(Camtest::wb_m());
 }
+
+void MainWindow::on_pushButton_update_clicked()
+{
+    setUi(Camtest::Update());
+}
+
+void MainWindow::setUi(const Camtest::UpdateR& m){
+
+    ui->label_msg->setText((m.isOk?"ok\n":"error\n")+m.msg);
+}
+
+

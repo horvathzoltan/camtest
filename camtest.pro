@@ -96,7 +96,7 @@ SOURCES += \
 
 HEADERS += \
     camtest.h \
-    mainwindow.h
+    mainwindow.h \
 
 FORMS += \
     mainwindow.ui
