@@ -68,7 +68,8 @@ private slots:
 
     void on_pushButton_wbm_clicked();
 
-    void on_clicked(const QPoint &p);
+    void on_pushButton_update_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
@@ -78,5 +79,7 @@ private:
     void setUi(const Camtest::StartR&);
     void setUi(const Camtest::StopR&);
     void setUi(const Camtest::UploadR &m);
+    void setUi(const Camtest::UpdateR &m);
+
 };
 #endif // MAINWINDOW_H

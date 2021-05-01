@@ -18,15 +18,28 @@ public:
         int wb;
     };
 
-    static com::helper::Downloader _d;
+    static com::helper::Downloader* _d;
     static QUrl CamUrl;
 
     struct StartR{
         QString msg;
         QString serial;
         bool isActive;
+        QString version;
         CamSettings _settings;
     };
+
+    static bool OpenCamera()
+    {
+        if(!_d) return false;
+        return _d->download("set_cam_open", "")=="ok";
+    }
+
+    static bool CloseCamera()
+    {
+        if(!_d) return false;
+        return _d->download("set_cam_close", "")=="ok";
+    }
 
 
     static CamSettings _camSettings;
@@ -35,11 +48,9 @@ public:
     static StopR Stop();
     static QString NewSerial(const QSqlDatabase &db);
     static bool Ping(const QString &ip, int port=-1);
-
-    static bool OpenCamera(){return Camtest::_d.download("set_cam_open", "")=="ok";}
-    static bool ActiveCamera(){return Camtest::_d.download("active", "")=="active";}
+    static QStringList GetIp(int i1, int i2, int p);
+    static void FilterLocalIp(QStringList *l);
     static bool GetCamSettings();
-    static bool CloseCamera(){return Camtest::_d.download("set_cam_close", "")=="ok";}
     static bool ClearCamSettings(int id);
     static bool SetCalD(int id, qreal dmin, qreal dmax);
     struct Status{
@@ -69,9 +80,55 @@ public:
     static int gain_m();
     static int wb_p();
     static int wb_m();
-    static bool ClearCamSettings();
+
+    struct UpdateR
+    {
+      bool isOk;
+      QString msg;
+    };
+
+    static Camtest::UpdateR Update();
+
 private:
-    static QByteArray GetPicture(bool isMvis);
+    static bool DeviceUpdateStorageStatus()
+    {
+        if(!_d) return false;
+        auto a = _d->download("get_storage_status", "");
+        return a.startsWith("ok");
+    }
+
+    static bool DeviceMountStorage()
+    {
+        if(!_d) return false;
+        auto a = _d->download("set_storage_mount", "");
+        return a.startsWith("ok");
+    }
+
+    static bool DeviceActive()
+    {
+        if(!_d) return false;
+        auto a = _d->download("active", "");
+        auto b = a=="active";
+        return b;
+    }
+
+    static QByteArray GetPicture()
+    {
+        if(!_d) return nullptr;
+        return _d->download("get_pic", "format=jpeg&mode=0");
+    }
+
+    static QString DeviceVersion()
+    {
+        if(!_d) return nullptr;
+        return _d->download("version", "");
+    }
+
+    static QString DeviceUpdate()
+    {
+        if(!_d) return nullptr;
+        return _d->download("update", "");
+    }
 
     static QString UploadMetaData(const QString& fn, int len);
     static void UploadData(const QString& key, const QByteArray& a);
