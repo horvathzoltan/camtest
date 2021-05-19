@@ -1,4 +1,7 @@
 #include "camtest.h"
+#include "networkhelper.h"
+#include "settings.h"
+#include "sqlhelper.h"
 #include "common/helper/ProcessHelper/processhelper.h"
 #include "common/helper/string/stringhelper.h"
 #include <QDirIterator>
@@ -11,6 +14,9 @@
 #include "common/logger/log.h"
 #include <QUrl>
 
+extern Settings _settings;
+
+
 //QString Camtest::CamIp = QStringLiteral("http://172.16.3.103:1997");
 QUrl Camtest::CamUrl;// = QUrl(QStringLiteral("http://172.16.3.103:1997"));
 com::helper::Downloader* Camtest::_d = nullptr;
@@ -19,33 +25,33 @@ Camtest::CamSettings Camtest::_camSettings;
 // ha ok, akkor arp -a cél ip -> mac addr
 // ha ismeretlen mac
 
-QString Camtest::GetDriverName(){
-    auto driverdir = QStringLiteral("/opt/microsoft/msodbcsql17/lib64");
-    auto driverpattern = QStringLiteral("^.*libmsodbcsql-?[1-9.so]*$");
-    auto driverfi = GetMostRecent(driverdir, driverpattern);
-    if(!driverfi.isFile()) return QString();
-    return driverfi.absoluteFilePath();
-}
+//QString Camtest::GetDriverName(){
+//    auto driverdir = QStringLiteral("/opt/microsoft/msodbcsql17/lib64");
+//    auto driverpattern = QStringLiteral("^.*libmsodbcsql-?[1-9.so]*$");
+//    auto driverfi = GetMostRecent(driverdir, driverpattern);
+//    if(!driverfi.isFile()) return QString();
+//    return driverfi.absoluteFilePath();
+//}
 
-QFileInfo Camtest::GetMostRecent(const QString& path, const QString& pattern)
-{
-    QFileInfo most_recent;
-    auto tstamp = QDateTime(QDate(1980,1,1));// ::currentDateTimeUtc().addYears(-1);//f1.lastModified();
-    QRegularExpression re(pattern);
+//QFileInfo Camtest::GetMostRecent(const QString& path, const QString& pattern)
+//{
+//    QFileInfo most_recent;
+//    auto tstamp = QDateTime(QDate(1980,1,1));// ::currentDateTimeUtc().addYears(-1);//f1.lastModified();
+//    QRegularExpression re(pattern);
 
-    QDirIterator it(path);
-    while (it.hasNext()) {
-        auto fn = it.next();
-        QFileInfo fi(fn);
-        if(!fi.isFile()) continue;
-        auto m = re.match(fn);
-        if(!m.hasMatch()) continue;
+//    QDirIterator it(path);
+//    while (it.hasNext()) {
+//        auto fn = it.next();
+//        QFileInfo fi(fn);
+//        if(!fi.isFile()) continue;
+//        auto m = re.match(fn);
+//        if(!m.hasMatch()) continue;
 
-        auto ts = fi.lastModified();
-        if(ts>tstamp){ tstamp=ts; most_recent = fi;}
-    }
-    return most_recent;
-}
+//        auto ts = fi.lastModified();
+//        if(ts>tstamp){ tstamp=ts; most_recent = fi;}
+//    }
+//    return most_recent;
+//}
 
 int Camtest::setCamSettings(const QString& s, int i)
 {
@@ -169,7 +175,7 @@ Camtest::StartR Camtest::Start(){
     QString user = "sa";
     QString password= "Gtr7jv8fh2";
 
-    if(!Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", 0, "",{}};
+    if(!NetworkHelper::Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", 0, "",{}};
     auto isActive = DeviceActive();
     auto version = DeviceVersion();
     GetCamSettings();
@@ -197,10 +203,14 @@ Camtest::StartR Camtest::Start(){
     append_value(&msg, mac);
     append_value(&msg, isActive);
 
-    auto isDB = Ping(dbhost);
-    if(isDB)
+    SQLHelper sqlh;
+    static const QString CONN = QStringLiteral("conn1");
+    auto db = sqlh.Connect(_settings._sql_settings, CONN);
+
+    //auto isDB = Ping(dbhost);
+    if(db.isValid())
     {
-        QSqlDatabase db = QSqlDatabase::addDatabase(driver, QStringLiteral("conn1"));
+        /*QSqlDatabase db = QSqlDatabase::addDatabase(driver, QStringLiteral("conn1"));
         db.setHostName(dbhost);
 
         int port = 1433;
@@ -212,9 +222,10 @@ Camtest::StartR Camtest::Start(){
         //db.setDatabaseName(QStringLiteral("DRIVER=/opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.7.so.1.1;Server=%1;Database=%2").arg(dbhost).arg(dbname));
         db.setUserName(user);
         db.setPassword(password);
+        */
         bool db_ok = db.open();
-        QString dberr="";
-        QString project = "00";//mestercipo
+        QString dberr("");
+        QString project = "4";//mestercipo
         QString board_rev = "a";//a válzozat
         bool isNew = false;
         int rows=0;
@@ -263,14 +274,14 @@ Camtest::StartR Camtest::Start(){
     return {msg, serial, isActive, version, _camSettings};
 }
 
-bool Camtest::Ping(const QString& ip, int port){
-    Q_UNUSED(port)
-    auto cmd = QStringLiteral(R"(ping -c1 -W1 %1)").arg(ip);
-    auto out = com::helper::ProcessHelper::Execute(cmd);
-    if(out.exitCode) return false;
-    //test ping port
-    return true;
-}
+//bool Camtest::Ping(const QString& ip, int port){
+//    Q_UNUSED(port)
+//    auto cmd = QStringLiteral(R"(ping -c1 -W1 %1)").arg(ip);
+//    auto out = com::helper::ProcessHelper::Execute(cmd);
+//    if(out.exitCode) return false;
+//    //test ping port
+//    return true;
+//}
 
 bool Camtest::GetCamSettings()
 {
@@ -463,4 +474,34 @@ Camtest::UpdateR Camtest::Update()
     append_value(&msg, i);
 
     return {isok, msg};
+}
+
+
+Camtest::ShutdownR Camtest::Shutdown()
+{
+    QString msg;
+
+    auto a = DeviceActive();
+    if(!a)
+    {
+        com::helper::StringHelper::AppendLine(&msg, "not active");
+        return {false, msg};
+    }
+
+    DeviceShutdown();
+
+    int i;
+    bool ping;
+
+    auto host = CamUrl.host();
+    for(i=0;i<10;i++)
+    {
+        QThread::sleep(3);
+        ping = NetworkHelper::Ping(host);
+        if(!ping) break;
+    }
+
+    if(i>10) msg+="Timeout\n";
+
+    return {!ping, msg};
 }

@@ -93,12 +93,18 @@ SOURCES += \
     camtest.cpp \
     labeleventfilter.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    networkhelper.cpp \
+    settings.cpp \
+    sqlhelper.cpp
 
 HEADERS += \
     camtest.h \
     labeleventfilter.h \
     mainwindow.h \
+    networkhelper.h \
+    settings.h \
+    sqlhelper.h
 
 FORMS += \
     mainwindow.ui

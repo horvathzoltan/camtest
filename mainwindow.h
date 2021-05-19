@@ -72,6 +72,8 @@ private slots:
 
     void on_pushButton_update_clicked();
 
+    void on_pushButton_shutdown_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
@@ -82,6 +84,7 @@ private:
     void setUi(const Camtest::StopR&);
     void setUi(const Camtest::UploadR &m);
     void setUi(const Camtest::UpdateR &m);
+    void setUi(const Camtest::ShutdownR &m);
 
 };
 #endif // MAINWINDOW_H

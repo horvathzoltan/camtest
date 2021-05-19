@@ -221,6 +221,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="pushButton_shutdown">
+         <property name="text">
+          <string>Shutdown</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label_msg">
          <property name="minimumSize">
           <size>

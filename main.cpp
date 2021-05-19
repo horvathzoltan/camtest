@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "settings.h"
 
 #include <QApplication>
 /*
@@ -19,6 +20,16 @@
  * név és verzió
  * API hívást lehet inzézni /gomb, /interval
 */
+
+Settings _settings(
+    {
+        "QODBC",
+        "BuildInfoFlex",
+        {{"office.logcontrol.hu", 9876}, {"172.16.1.5", 1433}},
+        "sa",
+        "Gtr7jv8fh2"
+    } );
+
 
 auto main(int argc, char *argv[]) -> int
 {

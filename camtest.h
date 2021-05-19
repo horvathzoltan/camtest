@@ -47,7 +47,7 @@ public:
     struct StopR{};
     static StopR Stop();
     static QString NewSerial(const QSqlDatabase &db);
-    static bool Ping(const QString &ip, int port=-1);
+    //static bool Ping(const QString &ip, int port=-1);
     static QStringList GetIp(int i1, int i2, int p);
     static void FilterLocalIp(QStringList *l);
     static bool GetCamSettings();
@@ -66,8 +66,8 @@ public:
         QString err;
     };
     static UploadR Upload(const QString& fn);
-    static QString GetDriverName();
-    static QFileInfo GetMostRecent(const QString &path, const QString &pattern);
+    //static QString GetDriverName();
+//    static QFileInfo GetMostRecent(const QString &path, const QString &pattern);
 
     static int setCamSettings(const QString& s, int i);
     static int brightnest_p();
@@ -88,6 +88,13 @@ public:
     };
 
     static Camtest::UpdateR Update();
+
+    struct ShutdownR
+    {
+        bool isOk;
+        QString msg;
+    };
+    static Camtest::ShutdownR Shutdown();
 
 private:
     static bool DeviceUpdateStorageStatus()
@@ -112,11 +119,21 @@ private:
         return b;
     }
 
+    static QString DeviceShutdown()
+    {
+        if(!_d) return nullptr;
+        auto a = _d->download("shutdown", "");
+        return a;
+    }
+
+
 //    static QByteArray GetPicture()
 //    {
 //        if(!_d) return nullptr;
 //        return _d->download("get_pic", "format=jpeg&mode=0");
 //    }
+
+
 
     static QByteArray GetPicture(bool isMvis);
 

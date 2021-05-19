@@ -317,4 +317,19 @@ void MainWindow::setUi(const Camtest::UpdateR& m){
     ui->label_msg->setText((m.isOk?"ok\n":"error\n")+m.msg);
 }
 
+//pushButton_shutdown
+
+void MainWindow::on_pushButton_shutdown_clicked()
+{
+    ui->label_msg->setText("Waiting for shutdown...");
+    setUi(Camtest::Shutdown());
+}
+
+void MainWindow::setUi(const Camtest::ShutdownR& m){
+
+    ui->label_msg->setText(QStringLiteral("Shutdown ")+(m.isOk?"ok\n":"error\n")+m.msg);
+    ui->radioButton_stop->setChecked(true);
+}
+
+
 
