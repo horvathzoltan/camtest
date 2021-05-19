@@ -42,6 +42,8 @@ public:
     void on_f_clicked(const QPoint &p);
     bool SetCamF();
 private slots:
+    void on_clicked(const QPoint& p);
+
     void on_radioButton_start_clicked();
 
     void on_radioButton_stop_clicked();

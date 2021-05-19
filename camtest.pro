@@ -97,6 +97,7 @@ SOURCES += \
 
 HEADERS += \
     camtest.h \
+    labeleventfilter.h \
     mainwindow.h \
 
 FORMS += \

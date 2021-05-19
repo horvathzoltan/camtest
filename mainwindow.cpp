@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::on_timer_timeout);
+
     ui->label_pic->installEventFilter( this );
     _eventFilter = new LabelEventFilter();//, clicked);
     connect(_eventFilter, &LabelEventFilter::clicked, this, &MainWindow::on_clicked);

@@ -112,11 +112,14 @@ private:
         return b;
     }
 
-    static QByteArray GetPicture()
-    {
-        if(!_d) return nullptr;
-        return _d->download("get_pic", "format=jpeg&mode=0");
-    }
+//    static QByteArray GetPicture()
+//    {
+//        if(!_d) return nullptr;
+//        return _d->download("get_pic", "format=jpeg&mode=0");
+//    }
+
+    static QByteArray GetPicture(bool isMvis);
+
 
     static QString DeviceVersion()
     {

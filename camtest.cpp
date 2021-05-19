@@ -290,9 +290,9 @@ bool Camtest::GetCamSettings()
 
 bool Camtest::ClearCamSettings(int id)
 {
-    auto a = Camtest::_d.download("set_td_d", "id=0&min=-1&max=-1");
-    a = Camtest::_d.download("set_td_field", "id=0&x1=-1&y1=-1&&x2=-1&y2=-1");
-    a = Camtest::_d.download("set_td_clearfc", "id=0");
+    auto a = Camtest::_d->download("set_td_d", "id=0&min=-1&max=-1");
+    a = Camtest::_d->download("set_td_field", "id=0&x1=-1&y1=-1&&x2=-1&y2=-1");
+    a = Camtest::_d->download("set_td_clearfc", "id=0");
 
     //auto a = Camtest::_d.download("set_td_reset", "&id=0");
 
@@ -303,7 +303,7 @@ bool Camtest::ClearCamSettings(int id)
 bool Camtest::SetCalD(int id, qreal dmin, qreal dmax)
 {    
     auto q = QStringLiteral("id=%1&min=%2&max=%2").arg(id).arg(dmin).arg(dmax);
-    auto a = Camtest::_d.download("set_td_d", q);
+    auto a = Camtest::_d->download("set_td_d", q);
     return true;
 }
 
@@ -312,7 +312,7 @@ bool Camtest::SetCalD(int id, qreal dmin, qreal dmax)
 bool Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1)
 {
     auto q = QStringLiteral("id=%1&x1=%2&y1=%2&x2=%3&y2=%4").arg(id).arg(x0).arg(y0).arg(x1).arg(y1);
-    auto a = Camtest::_d.download("set_td_d", q);
+    auto a = Camtest::_d->download("set_td_d", q);
     return true;
 }
 
@@ -326,7 +326,7 @@ bool Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1)
 Camtest::Status Camtest::GetCamStatus()
 {
     Camtest::Status s;
-    auto a = Camtest::_d.download("get_cam_status", "");
+    auto a = Camtest::_d->download("get_cam_status", "");
     if(a.isEmpty()) return s;
     auto b = a.split(';');
     if(b.length()<9) return s;
@@ -353,13 +353,13 @@ QByteArray Camtest::GetPicture(bool isMvis)
 {
     QString q("format=jpeg&mode=0");
     if(isMvis) q+="&mvis";
-    return Camtest::_d.download("get_pic", q);
+    return Camtest::_d->download("get_pic", q);
 }
 
 
 QPixmap Camtest::GetPixmap(bool isMvis)
 {
-    QByteArray b = Camtest::GetPicture(isMvis);
+    QByteArray b = GetPicture(isMvis);
     QPixmap p;
     if(b.length()>100) p.loadFromData(b,"JPG");
     return p;
