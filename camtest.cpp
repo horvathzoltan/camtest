@@ -301,6 +301,8 @@ bool Camtest::GetCamSettings()
 
 bool Camtest::ClearCamSettings(int id)
 {
+    Q_UNUSED(id)
+
     auto a = Camtest::_d->download("set_td_d", "id=0&min=-1&max=-1");
     a = Camtest::_d->download("set_td_field", "id=0&x1=-1&y1=-1&&x2=-1&y2=-1");
     a = Camtest::_d->download("set_td_clearfc", "id=0");
@@ -378,6 +380,7 @@ QPixmap Camtest::GetPixmap(bool isMvis)
 
 Camtest::UploadR Camtest::Upload(const QString& fn)
 {
+    Q_UNUSED(fn)
     if(!DeviceActive()) return{"Camera not active"};
     QByteArray a(100, 0);
     for(int i=0;i<100;i++)a[i]=i;

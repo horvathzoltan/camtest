@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QPixmap>
 #include <QtMath>
+#include <Qt>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,22 +23,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->label_pic->installEventFilter(_eventFilter);
 }
 
-void MainWindow::on_clicked(const QPoint& p)
+void MainWindow::on_clicked(QPoint p)
 {
     if(ui->radioButton_fc->isChecked()) on_fc_clicked(p);
     else if(ui->radioButton_d->isChecked()) on_d_clicked(p);
     else if(ui->radioButton_f->isChecked()) on_f_clicked(p);
 }
 
-void MainWindow::on_fc_clicked(const QPoint& p)
-{
-    auto pix = ui->label_pic->pixmap();
-    if(!pix) return;
-    auto img = pix->toImage();
-    auto c = img.pixelColor(p);
-    auto txt = c.name();
-    ui->label_rgb->setText(txt);
-}
+
 
 
 void MainWindow::on_d_clicked(const QPoint& p)
@@ -48,11 +41,12 @@ void MainWindow::on_d_clicked(const QPoint& p)
     {
     case 0:
     {
-        auto pix = ui->label_pic->pixmap();
+        auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
+        //auto pix = ui->label_pic->pixmap();
 
         _d_status->round=1;
         _d_status->p0=p;
-        _d_status->w = pix->width();
+        _d_status->w = pix.width();
         break;
     }
     case 1:
@@ -223,7 +217,9 @@ void MainWindow::setUi(const Camtest::StartR& m){
     setLabelG(m._settings.gain);
 }
 
-void MainWindow::setUi(const Camtest::StopR& m){        
+void MainWindow::setUi(const Camtest::StopR& m){
+    Q_UNUSED(m)
+
     timer->stop();
     //ui->label_txt->setText("");
     //ui->label_serial->setText("");

@@ -26,7 +26,15 @@ public:
     void setLabelG(int i);
     void setLabelWB(int i);
 
-    void on_fc_clicked(const QPoint &p);
+    void on_fc_clicked(const QPoint &p)
+    {
+        auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
+        if(!pix) return;
+        auto img = pix.toImage();
+        auto c = img.pixelColor(p);
+        auto txt = c.name();
+        ui->label_rgb->setText(txt);
+    }
 
     struct DStatus
     {
@@ -42,7 +50,7 @@ public:
     void on_f_clicked(const QPoint &p);
     bool SetCamF();
 private slots:
-    void on_clicked(const QPoint& p);
+    void on_clicked(QPoint p);
 
     void on_radioButton_start_clicked();
 
