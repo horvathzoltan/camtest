@@ -30,6 +30,15 @@ void MainWindow::on_clicked(QPoint p)
     else if(ui->radioButton_f->isChecked()) on_f_clicked(p);
 }
 
+void MainWindow::on_fc_clicked(const QPoint &p)
+{
+        QPixmap pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
+    //if(!pix) return;
+    auto img = pix.toImage();
+    auto c = img.pixelColor(p);
+    auto txt = c.name();
+    ui->label_rgb->setText(txt);
+}
 
 
 
@@ -73,11 +82,12 @@ void MainWindow::on_f_clicked(const QPoint& p)
     {
     case 0:
     {
-        auto pix = ui->label_pic->pixmap();
+        //auto pix = ui->label_pic->pixmap();
+        auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
 
         _d_status->round=1;
         _d_status->p0=p;
-        _d_status->w = pix->width();
+        _d_status->w = pix.width();
         break;
     }
     case 1:

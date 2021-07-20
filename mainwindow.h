@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QLabel>
+#include <QPixmap>
 #include "camtest.h"
 #include "common/helper/downloader/downloader.h"
 #include "labeleventfilter.h"
@@ -26,15 +27,7 @@ public:
     void setLabelG(int i);
     void setLabelWB(int i);
 
-    void on_fc_clicked(const QPoint &p)
-    {
-        auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
-        if(!pix) return;
-        auto img = pix.toImage();
-        auto c = img.pixelColor(p);
-        auto txt = c.name();
-        ui->label_rgb->setText(txt);
-    }
+    void on_fc_clicked(const QPoint &p);
 
     struct DStatus
     {

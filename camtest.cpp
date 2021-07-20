@@ -122,7 +122,25 @@ int Camtest::wb_m()
 }
 /**/
 
-QStringList Camtest::GetIp(int i1, int i2, int p)
+QStringList Camtest::GetIp(uchar i1, uchar i2, quint16 p)
+{
+    if(i1>0 && i2<255 && i1>=i2) return {};
+    QTcpSocket socket;
+    QStringList l;
+    for(uchar i = i1;i<=i2;i++)
+    {
+        auto ip = "10.10.10."+QString::number(i);
+        socket.connectToHost(ip, p);
+        if(socket.waitForConnected(3))
+        {
+            socket.disconnectFromHost();
+            l.append(ip);
+        }
+    }
+    return l;
+}
+
+QStringList Camtest::GetIp_old(int i1, int i2, int p)
 {
     if(i1<1||i1>255) return {};
     if(i2<1||i2>255) return {};
@@ -155,8 +173,9 @@ void Camtest::FilterLocalIp(QStringList *l)
 
 
 Camtest::StartR Camtest::Start(){
-    int cam_p = 1997;
-    auto iplist=GetIp(100,155,cam_p);
+    qint16 cam_p = 1997;
+    auto iplist=GetIp(100,130,cam_p);
+    iplist.append(GetIp(150,155,cam_p));
     FilterLocalIp(&iplist);
 
     QString cam_ip;

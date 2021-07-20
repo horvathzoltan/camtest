@@ -48,7 +48,8 @@ public:
     static StopR Stop();
     static QString NewSerial(const QSqlDatabase &db);
     //static bool Ping(const QString &ip, int port=-1);
-    static QStringList GetIp(int i1, int i2, int p);
+    static QStringList GetIp_old(int i1, int i2, int p);
+    static QStringList GetIp(uchar i1, uchar i2, quint16 p);
     static void FilterLocalIp(QStringList *l);
     static bool GetCamSettings();
     static bool ClearCamSettings(int id);
