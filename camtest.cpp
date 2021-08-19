@@ -53,76 +53,76 @@ Camtest::CamSettings Camtest::_camSettings;
 //    return most_recent;
 //}
 
-int Camtest::setCamSettings(const QString& s, int i)
+auto Camtest::setCamSettings(const QString& s, int i) -> int
 {
     if(!_d) return -1;
-    Camtest::_d->download("set_cam_settings", s+'='+QString::number(i));
+    Camtest::_d->download(QStringLiteral("set_cam_settings"), s+'='+QString::number(i));
     return i;
 }
 
-int Camtest::brightnest_p()
+auto Camtest::brightnest_p() -> int
 {
     GetCamSettings();
-    return setCamSettings("brightness",++_camSettings.brightnest);
+    return setCamSettings(QStringLiteral("brightness"),++_camSettings.brightnest);
 }
 
-int Camtest::brightnest_m()
+auto Camtest::brightnest_m() -> int
 {
     GetCamSettings();
-    return setCamSettings("brightness",--_camSettings.brightnest);
+    return setCamSettings(QStringLiteral("brightness"),--_camSettings.brightnest);
 }
 
-int Camtest::contrast_p()
+auto Camtest::contrast_p() -> int
 {
     GetCamSettings();
-    return setCamSettings("contrast",++_camSettings.contrast);
+    return setCamSettings(QStringLiteral("contrast"),++_camSettings.contrast);
 }
 
-int Camtest::contrast_m()
+auto Camtest::contrast_m() -> int
 {
     GetCamSettings();
-    return setCamSettings("contrast",--_camSettings.contrast);
+    return setCamSettings(QStringLiteral("contrast"),--_camSettings.contrast);
 }
 
-int Camtest::saturation_p()
+auto Camtest::saturation_p() -> int
 {
     GetCamSettings();
-    return setCamSettings("saturation",++_camSettings.saturation);
+    return setCamSettings(QStringLiteral("saturation"),++_camSettings.saturation);
 }
 
-int Camtest::saturation_m()
+auto Camtest::saturation_m() -> int
 {
     GetCamSettings();
-    return setCamSettings("saturation",--_camSettings.saturation);
+    return setCamSettings(QStringLiteral("saturation"),--_camSettings.saturation);
 }
 
-int Camtest::gain_p()
+auto Camtest::gain_p() -> int
 {
     GetCamSettings();
-    return setCamSettings("gain",++_camSettings.gain);
+    return setCamSettings(QStringLiteral("gain"),++_camSettings.gain);
 }
 
-int Camtest::gain_m()
+auto Camtest::gain_m() -> int
 {
     GetCamSettings();
-    return setCamSettings("gain",--_camSettings.gain);
-}
-/**/
-
-int Camtest::wb_p()
-{
-    GetCamSettings();
-    return setCamSettings("awb",++_camSettings.wb);
-}
-
-int Camtest::wb_m()
-{
-    GetCamSettings();
-    return setCamSettings("awb",--_camSettings.wb);
+    return setCamSettings(QStringLiteral("gain"),--_camSettings.gain);
 }
 /**/
 
-QStringList Camtest::GetIp(uchar i1, uchar i2, quint16 p)
+auto Camtest::wb_p() -> int
+{
+    GetCamSettings();
+    return setCamSettings(QStringLiteral("awb"),++_camSettings.wb);
+}
+
+auto Camtest::wb_m() -> int
+{
+    GetCamSettings();
+    return setCamSettings(QStringLiteral("awb"),--_camSettings.wb);
+}
+/**/
+
+auto Camtest::GetIp(uchar i1, uchar i2, quint16 p) -> QStringList
 {
     if(i1>0 && i2<255 && i1>=i2) return {};
     QTcpSocket socket;
@@ -140,7 +140,8 @@ QStringList Camtest::GetIp(uchar i1, uchar i2, quint16 p)
     return l;
 }
 
-QStringList Camtest::GetIp_old(int i1, int i2, int p)
+QT_DEPRECATED
+auto Camtest::GetIp_old(int i1, int i2, int p) -> QStringList
 {
     if(i1<1||i1>255) return {};
     if(i2<1||i2>255) return {};
@@ -151,7 +152,7 @@ QStringList Camtest::GetIp_old(int i1, int i2, int p)
     auto out = com::helper::ProcessHelper::Execute(cmd);
     if(out.exitCode) return {};
 
-    static const QRegularExpression r(R"(Nmap scan report for\s+(?:\S+\s+)?\(?([0-9\.]+)\)?)");
+    static const QRegularExpression r(QStringLiteral(R"(Nmap scan report for\s+(?:\S+\s+)?\(?([0-9\.]+)\)?)"));
     auto mi = r.globalMatch(out.stdOut);
 
     QStringList e;
@@ -172,7 +173,7 @@ void Camtest::FilterLocalIp(QStringList *l)
 }
 
 
-Camtest::StartR Camtest::Start(){
+auto Camtest::Start() -> Camtest::StartR{
     qint16 cam_p = 1997;
     auto iplist=GetIp(100,130,cam_p);
     iplist.append(GetIp(150,155,cam_p));
@@ -180,30 +181,30 @@ Camtest::StartR Camtest::Start(){
 
     QString cam_ip;
 
-    if(iplist.count()>0) cam_ip= iplist[0];
-    else cam_ip=QStringLiteral("10.10.10.150");//CamUrl.host();//QStringLiteral("172.16.3.103"); //beallitasok(ip)
+    if(iplist.count()>0) { cam_ip= iplist[0];
+    } else cam_ip=QStringLiteral("10.10.10.150");//CamUrl.host();//QStringLiteral("172.16.3.103"); //beallitasok(ip)
 
     CamUrl = QUrl(QStringLiteral("http://%1:%2").arg(cam_ip).arg(cam_p));
 
-    if(_d) delete _d;
+    delete _d;
     _d = new com::helper::Downloader(CamUrl.toString());
 
-    QString driver = "QODBC";//"QODBC";
-    QString dbname = "BuildInfoFlex";
-    QString dbhost = "172.16.1.5";//:1433";
-    QString user = "sa";
-    QString password= "Gtr7jv8fh2";
+    QString driver = QStringLiteral("QODBC");//"QODBC";
+    QString dbname = QStringLiteral("BuildInfoFlex");
+    QString dbhost = QStringLiteral("172.16.1.5");//:1433";
+    QString user = QStringLiteral("sa");
+    QString password= QStringLiteral("Gtr7jv8fh2");
 
-    if(!NetworkHelper::Ping(cam_ip)) return {"cannot ping camera at "+cam_ip, "", 0, "",{}};
+    if(!NetworkHelper::Ping(cam_ip)) return {QStringLiteral("cannot ping camera at ")+cam_ip, "", false, "",{}};
     auto isActive = DeviceActive();
     auto version = DeviceVersion();
     GetCamSettings();
 
     auto cmd = QStringLiteral(R"(arp -a -n %1)").arg(cam_ip);
     auto out = com::helper::ProcessHelper::Execute(cmd);
-    if(out.exitCode!=0) return {"arp error", "", 0, version,_camSettings};
+    if(out.exitCode!=0) return {QStringLiteral("arp error"), "", false, version,_camSettings};
     // ? (172.16.3.235) at dc:a6:32:74:92:dd [ether] on enp4s0
-    if(out.stdOut.isEmpty()) return {"no arp output", "", 0, version, {}};
+    if(out.stdOut.isEmpty()) return {QStringLiteral("no arp output"), "", false, version, {}};
 
     QString& x = out.stdOut;
     QRegularExpression re(QStringLiteral(R"(at\s+((?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})\s+)"));
@@ -243,9 +244,9 @@ Camtest::StartR Camtest::Start(){
         db.setPassword(password);
         */
         bool db_ok = db.open();
-        QString dberr("");
-        QString project = "4";//mestercipo
-        QString board_rev = "a";//a válzozat
+        QString dberr(QLatin1String(""));
+        QString project = QStringLiteral("4");//mestercipo
+        QString board_rev = QStringLiteral("a");//a válzozat
         bool isNew = false;
         int rows=0;
         if(db_ok)
@@ -288,7 +289,7 @@ Camtest::StartR Camtest::Start(){
         append_value(&msg, rows);
         append_value(&msg, version);
     }
-    QSqlDatabase::removeDatabase("conn1");
+    QSqlDatabase::removeDatabase(QStringLiteral("conn1"));
 
     return {msg, serial, isActive, version, _camSettings};
 }
@@ -302,9 +303,9 @@ Camtest::StartR Camtest::Start(){
 //    return true;
 //}
 
-bool Camtest::GetCamSettings()
+auto Camtest::GetCamSettings() -> bool
 {
-    auto a = _d->download("get_cam_settings", "");
+    auto a = _d->download(QStringLiteral("get_cam_settings"), QLatin1String(""));
     if(a.isEmpty()) return false;
     auto b = a.split(';');
     if(b.length()<5) return false;
@@ -318,13 +319,13 @@ bool Camtest::GetCamSettings()
     return true;
 }
 
-bool Camtest::ClearCamSettings(int id)
+auto Camtest::ClearCamSettings(int id) -> bool
 {
     Q_UNUSED(id)
 
-    auto a = Camtest::_d->download("set_td_d", "id=0&min=-1&max=-1");
-    a = Camtest::_d->download("set_td_field", "id=0&x1=-1&y1=-1&&x2=-1&y2=-1");
-    a = Camtest::_d->download("set_td_clearfc", "id=0");
+    auto a = Camtest::_d->download(QStringLiteral("set_td_d"), QStringLiteral("id=0&min=-1&max=-1"));
+    a = Camtest::_d->download(QStringLiteral("set_td_field"), QStringLiteral("id=0&x1=-1&y1=-1&&x2=-1&y2=-1"));
+    a = Camtest::_d->download(QStringLiteral("set_td_clearfc"), QStringLiteral("id=0"));
 
     //auto a = Camtest::_d.download("set_td_reset", "&id=0");
 
@@ -332,19 +333,19 @@ bool Camtest::ClearCamSettings(int id)
 }
 
 //set_td_d//id//min//max
-bool Camtest::SetCalD(int id, qreal dmin, qreal dmax)
+auto  Camtest::SetCalD(int id, qreal dmin, qreal dmax) -> bool
 {    
     auto q = QStringLiteral("id=%1&min=%2&max=%2").arg(id).arg(dmin).arg(dmax);
-    auto a = Camtest::_d->download("set_td_d", q);
+    auto a = Camtest::_d->download(QStringLiteral("set_td_d"), q);
     return true;
 }
 
 //set_td_field//id//x1//y1//x2//y2
 
-bool Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1)
+auto Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1) -> bool
 {
     auto q = QStringLiteral("id=%1&x1=%2&y1=%2&x2=%3&y2=%4").arg(id).arg(x0).arg(y0).arg(x1).arg(y1);
-    auto a = Camtest::_d->download("set_td_d", q);
+    auto a = Camtest::_d->download(QStringLiteral("set_td_d"), q);
     return true;
 }
 
@@ -355,10 +356,10 @@ bool Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1)
 //set_td_replacefcs
 
 //isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval[ms];total[MB];free[MB]
-Camtest::Status Camtest::GetCamStatus()
+auto Camtest::GetCamStatus() -> Camtest::Status
 {
     Camtest::Status s;
-    auto a = Camtest::_d->download("get_cam_status", "");
+    auto a = Camtest::_d->download(QStringLiteral("get_cam_status"), QLatin1String(""));
     if(a.isEmpty()) return s;
     auto b = a.split(';');
     if(b.length()<9) return s;
@@ -368,7 +369,8 @@ Camtest::Status Camtest::GetCamStatus()
     return s;
 }
 
-QString Camtest::NewSerial(const QSqlDatabase& db){
+auto Camtest::NewSerial(const QSqlDatabase& db) -> QString
+{
     QSqlQuery q(db);
     auto db_ok = q.exec(QStringLiteral("SELECT MAX(serial) AS maxserial FROM ManufacturingInfo"));
     if(!db_ok) return QString();
@@ -379,17 +381,17 @@ QString Camtest::NewSerial(const QSqlDatabase& db){
     return QString::number(serial);
 }
 
-Camtest::StopR Camtest::Stop(){return {};}
+auto Camtest::Stop() -> Camtest::StopR {return {};}
 
-QByteArray Camtest::GetPicture(bool isMvis)
+auto Camtest::GetPicture(bool isMvis)-> QByteArray
 {
-    QString q("format=jpeg&mode=0");
-    if(isMvis) q+="&mvis";
-    return Camtest::_d->download("get_pic", q);
+    QString q(QStringLiteral("format=jpeg&mode=0"));
+    if(isMvis) q+=QStringLiteral("&mvis");
+    return Camtest::_d->download(QStringLiteral("get_pic"), q);
 }
 
 
-QPixmap Camtest::GetPixmap(bool isMvis)
+auto Camtest::GetPixmap(bool isMvis) -> QPixmap
 {
     QByteArray b = GetPicture(isMvis);
     QPixmap p;
@@ -397,7 +399,7 @@ QPixmap Camtest::GetPixmap(bool isMvis)
     return p;
 }
 
-Camtest::UploadR Camtest::Upload(const QString& fn)
+auto Camtest::Upload(const QString& fn) -> Camtest::UploadR
 {
     Q_UNUSED(fn)
     if(!DeviceActive()) return{"Camera not active"};
@@ -409,9 +411,9 @@ Camtest::UploadR Camtest::Upload(const QString& fn)
     int maxlen = a.length();
     int slen = 16;
 
-    auto key = UploadMetaData("kurutty.txt", maxlen);
+    auto key = UploadMetaData(QStringLiteral("kurutty.txt"), maxlen);
 
-    if(key.isEmpty()){ zInfo("key is empty"); return {"key is empty"};}
+    if(key.isEmpty()){ zInfo(QStringLiteral("key is empty")); return {QStringLiteral("key is empty")};}
 
     zInfo("key:"+key);
     //
@@ -433,22 +435,24 @@ Camtest::UploadR Camtest::Upload(const QString& fn)
 }
 
 // minden fájl küldéskor kap egy kulcsot
-QString Camtest::UploadMetaData(const QString& fn, int len){
-    QString key = _d->download("upload_meta", "fn="+fn+"len="+QString::number(len));
+auto Camtest::UploadMetaData(const QString& fn, int len) -> QString
+{
+    QString key = _d->download(QStringLiteral("upload_meta"), "fn="+fn+"len="+QString::number(len));
     return key;
 }
 
 void Camtest::UploadData(const QString& key, const QByteArray& data){
     QString err;
-    _d->post("upload", "key="+key, &err, data);
+    _d->post(QStringLiteral("upload"), "key="+key, &err, data);
 }
 
 // UploadNext visszaküldi a fogadott length-t
 //0: kezdődik
 //>0 folyamatben
 //-2 hiba volt, újra
-int Camtest::UploadNext(const QString& key){
-    QString b = _d->download("upload_length", "key="+key);
+auto Camtest::UploadNext(const QString& key) -> int
+{
+    QString b = _d->download(QStringLiteral("upload_length"), QStringLiteral("key=")+key);
     //b nem lehet busy, timeout vagy egyéb balgaság
     bool ok;
     int ix = b.toInt(&ok);
@@ -456,14 +460,14 @@ int Camtest::UploadNext(const QString& key){
 }
 
 
-Camtest::UpdateR Camtest::Update()
+auto Camtest::Update() -> Camtest::UpdateR
 {
     QString msg;
 
     auto a = DeviceActive();
     if(!a)
     {
-        com::helper::StringHelper::AppendLine(&msg, "not active");
+        com::helper::StringHelper::AppendLine(&msg, QStringLiteral("not active"));
         return {false, msg};
     }
 
@@ -474,7 +478,7 @@ Camtest::UpdateR Camtest::Update()
     auto updstatus = DeviceUpdateStorageStatus();
     if(!updstatus) updstatus=DeviceMountStorage();
     if(!updstatus){
-        com::helper::StringHelper::AppendLine(&msg, "cannot mount");
+        com::helper::StringHelper::AppendLine(&msg, QStringLiteral("cannot mount"));
         return {false, msg};
     }
 
@@ -499,14 +503,14 @@ Camtest::UpdateR Camtest::Update()
 }
 
 
-Camtest::ShutdownR Camtest::Shutdown()
+auto Camtest::Shutdown() -> Camtest::ShutdownR
 {
     QString msg;
 
     auto a = DeviceActive();
     if(!a)
     {
-        com::helper::StringHelper::AppendLine(&msg, "not active");
+        com::helper::StringHelper::AppendLine(&msg, QStringLiteral("not active"));
         return {false, msg};
     }
 
@@ -523,7 +527,7 @@ Camtest::ShutdownR Camtest::Shutdown()
         if(!ping) break;
     }
 
-    if(i>10) msg+="Timeout\n";
+    if(i>10) msg+=QStringLiteral("Timeout\n");
 
     return {!ping, msg};
 }
