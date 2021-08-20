@@ -42,6 +42,7 @@ public:
     bool SetCamD();
     void on_f_clicked(const QPoint &p);
     bool SetCamF();
+    void setUi_TestSyncR(const Camtest::TestSyncR &m);
 private slots:
     void on_clicked(QPoint p);
 
@@ -75,6 +76,14 @@ private slots:
 
     void on_pushButton_shutdown_clicked();
 
+    void on_pushButton_rec_clicked();
+
+    void on_pushButton_stop_clicked();
+
+    void on_pushButton_sync_rec_clicked();
+
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
@@ -86,6 +95,10 @@ private:
     void setUi(const Camtest::UploadR &m);
     void setUi(const Camtest::UpdateR &m);
     void setUi(const Camtest::ShutdownR &m);
+
+    void setUi_StartRec(const Camtest::StartRecR &m);
+    void setUi_StopRec(const Camtest::StopRecR &m);
+    void setUi_StartRecSyncR(const Camtest::StartRecSyncR &m);
 
 };
 #endif // MAINWINDOW_H

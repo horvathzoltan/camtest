@@ -97,6 +97,31 @@ public:
     };
     static Camtest::ShutdownR Shutdown();
 
+    struct StartRecR{
+        QString msg;
+    };
+
+    static Camtest::StartRecR StartRecording();
+
+    struct StopRecR{
+        QString msg;
+    };
+
+    static StopRecR StopRecording();
+
+    struct StartRecSyncR{
+        QString msg;
+    };
+
+    static Camtest::StartRecSyncR StartRecSync();
+
+    struct TestSyncR{
+        QString msg;
+    };
+
+    static TestSyncR TestSync();
+
+    static void AppendLine(QString *msg, const QString &a);
 private:
     static bool DeviceUpdateStorageStatus()
     {
@@ -126,8 +151,68 @@ private:
         auto a = _d->download("shutdown", "");
         return a;
     }
+    /*
+     * http://10.10.10.150:1997/get_storage_status?images
+status:_not_mounted
+*/
+    static bool DeviceGetStorageStatusImages(){
+        if(!_d) return false;
+        auto a = _d->download("get_storage_status", "images");
+        return a.startsWith("ok");
+    }
+    /*
+     * http://10.10.10.150:1997/set_storage_mount?images
+ok
+/mnt/images*/
+    static bool DeviceMountStorageImages(){
+        if(!_d) return false;
+        auto a = _d->download("set_storage_mount", "images");
+        return a.startsWith("ok");
+    }
+
+/*
+ * http://10.10.10.150:1997/get_cam_status
+1;0;1;0;0;0;0;3854;3488
+isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
+*/
+    struct CamStatus{
+        bool isOpened;
+        bool isGrabOk;
+        bool isOpenOk;
+        bool isRec;
+        bool isActive;//count;interval;total;free
+    };
+
+    static CamStatus DeviceGetCamStatus(){
+        if(!_d) return CamStatus{};
+        auto a = _d->download("get_cam_status", "");
+        auto l = a.split(';');
+        if(l.length()<5) return {};
+        CamStatus r;
+        r.isOpened = l[0]=="1";
+        r.isGrabOk = l[1]=="1";
+        r.isOpenOk = l[2]=="1";
+        r.isRec = l[3]=="1";
+        r.isActive = l[4]=="1";
+        return r;
+    }
+
+    static bool DeviceStartRec(const QString& fn, bool isSync = false){
+        if(!_d) return false;
+        QString q =
+            QStringLiteral("videofolder=%1/cam1&data_mode=0&file_mode=0&sec=10").arg(fn);
+        if(isSync) q+="&sync";
+        auto a = _d->download("set_rec_start", q);
+        return a.startsWith("ok");
+    }
 
 
+
+    static bool DeviceStopRec(){
+        if(!_d) return false;
+        auto a = _d->download("set_rec_stop", "");
+        return a.startsWith("ok");
+    }
 //    static QByteArray GetPicture()
 //    {
 //        if(!_d) return nullptr;
@@ -154,6 +239,14 @@ private:
     static QString UploadMetaData(const QString& fn, int len);
     static void UploadData(const QString& key, const QByteArray& a);
     static int UploadNext(const QString& key);
+
+    enum Commands:uchar{
+        GetTestR = '@',
+        Test = 'A',
+        RecStartSync,
+        StopRec,
+        SetClock
+    };
 };
 
 

@@ -327,7 +327,7 @@ void MainWindow::setUi(const Camtest::UpdateR& m){
 
 void MainWindow::on_pushButton_shutdown_clicked()
 {
-    ui->label_msg->setText("Waiting for shutdown...");
+    ui->label_msg->setText(QStringLiteral("Waiting for shutdown..."));
     setUi(Camtest::Shutdown());
 }
 
@@ -337,5 +337,51 @@ void MainWindow::setUi(const Camtest::ShutdownR& m){
     ui->radioButton_stop->setChecked(true);
 }
 
+void MainWindow::setUi_StartRec(const Camtest::StartRecR &m)
+{
+    ui->label_msg->setText(m.msg);
+}
 
+void MainWindow::setUi_StopRec(const Camtest::StopRecR &m)
+{
+    ui->label_msg->setText(m.msg);
+}
+
+void MainWindow::setUi_StartRecSyncR(const Camtest::StartRecSyncR &m)
+{
+    ui->label_msg->setText(m.msg);
+}
+
+void MainWindow::setUi_TestSyncR(const Camtest::TestSyncR &m)
+{
+    ui->label_msg->setText(m.msg);
+}
+
+
+void MainWindow::on_pushButton_rec_clicked()
+{
+    auto m = Camtest::StartRecording();
+    setUi_StartRec(m);
+}
+
+
+void MainWindow::on_pushButton_stop_clicked()
+{
+    auto m = Camtest::StopRecording();
+    setUi_StopRec(m);
+}
+
+
+void MainWindow::on_pushButton_sync_rec_clicked()
+{
+    auto m = Camtest::StartRecSync();
+    setUi_StartRecSyncR(m);
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    auto m = Camtest::TestSync();
+    setUi_TestSyncR(m);
+}
 

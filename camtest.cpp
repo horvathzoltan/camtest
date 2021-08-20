@@ -4,6 +4,7 @@
 #include "sqlhelper.h"
 #include "common/helper/ProcessHelper/processhelper.h"
 #include "common/helper/string/stringhelper.h"
+#include <QBuffer>
 #include <QDirIterator>
 #include <QNetworkInterface>
 #include <QRegularExpression>
@@ -13,6 +14,7 @@
 #include <QThread>
 #include "common/logger/log.h"
 #include <QUrl>
+#include <QtEndian>
 
 extern Settings _settings;
 
@@ -530,4 +532,110 @@ auto Camtest::Shutdown() -> Camtest::ShutdownR
     if(i>10) msg+=QStringLiteral("Timeout\n");
 
     return {!ping, msg};
+}
+
+auto Camtest::StartRecording() -> Camtest::StartRecR
+{
+    Camtest::StartRecR r;
+    if(!_d) return {"no camera"};
+    bool isactive = DeviceActive();
+    if(!isactive) return {"device is not active"};
+    auto storagestatus = DeviceGetStorageStatusImages();
+    if(!storagestatus){
+        auto mountstatus = DeviceMountStorageImages();
+        if(!mountstatus) {
+            return {"cannot mount storage 'images'"};
+        }
+    }
+
+    auto status = DeviceGetCamStatus();
+
+    if(!status.isOpened){
+        auto isopen = OpenCamera();
+        if(!isopen) return {"cannot open"};
+        status = DeviceGetCamStatus();
+    }
+    if(status.isRec) return {"recording in progress"};
+    if(status.isActive) return {"recording timer is active"};
+
+    QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
+    QString fn = "manymany_"+timestamp;
+    auto isrecok = DeviceStartRec(fn);
+    if(!isrecok) return{"cannot start recording"};
+    r.msg = "recording started: "+ fn;
+    return r;
+}
+
+auto Camtest::StopRecording() -> StopRecR
+{
+    if(!_d) return {"no camera"};
+    bool isactive = DeviceActive();
+    if(!isactive) return {"device is not active"};
+    auto a = DeviceStopRec();
+    if(!a) return {"cannot stop recording"};
+    return {"recording stopped"};
+}
+
+auto Camtest::StartRecSync() -> Camtest::StartRecSyncR
+{
+    StartRecSyncR r;
+    if(!_d) return {"no camera"};
+    bool isactive = DeviceActive();
+    if(!isactive) return {"device is not active"};
+    auto storagestatus = DeviceGetStorageStatusImages();
+    if(!storagestatus){
+        auto mountstatus = DeviceMountStorageImages();
+        if(!mountstatus) {
+            return {"cannot mount storage 'images'"};
+        }
+    }
+
+    auto status = DeviceGetCamStatus();
+
+    if(!status.isOpened){
+        auto isopen = OpenCamera();
+        if(!isopen) return {"cannot open"};
+        status = DeviceGetCamStatus();
+    }
+    if(status.isRec) return {"recording in progress"};
+    if(status.isActive) return {"recording timer is active"};
+
+    QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
+    QString fn = "sync_many_"+timestamp;
+    auto isrecok = DeviceStartRec(fn, true);
+    if(!isrecok) return{"cannot start recording"};
+
+    qint64 t = 3000;
+    if(QSysInfo::ByteOrder==QSysInfo::Endian::BigEndian) t = qToLittleEndian(t);
+    QByteArray a;
+    a.append(Commands::RecStartSync);
+    a.append(reinterpret_cast<char*>(&t), sizeof(t));
+
+    QHostAddress aa = NetworkHelper::BroadcastAddress(CamUrl);
+    NetworkHelper::sendUDP(aa, 1998, a);
+
+    status = DeviceGetCamStatus();
+    if(status.isRec) AppendLine(&r.msg,"recording in progress");
+    if(status.isActive) AppendLine(&r.msg, "recording timer is active");
+    AppendLine(&r.msg, fn);
+    return r;
+}
+
+void Camtest::AppendLine(QString *msg, const QString& a)
+{
+    if(!msg)return;
+    if(!msg->isEmpty())*msg+='\n';
+    *msg+=a;
+}
+
+auto Camtest::TestSync() -> TestSyncR
+{
+    if(!_d) return {"no camera"};
+
+    QHostAddress b = NetworkHelper::BroadcastAddress(CamUrl);
+    QString aa = QStringLiteral("10.10.10.255");
+    QByteArray a;
+    a.append(Commands::Test);
+    NetworkHelper::sendUDP(b, 1998, a);
+    return {"test sent"};
 }
