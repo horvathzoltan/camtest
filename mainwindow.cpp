@@ -363,6 +363,12 @@ void MainWindow::setUi_StopRecSyncR(const Camtest::StopRecSyncR &m)
     ui->label_msg->setText(m.msg);
 }
 
+void MainWindow::setUi_TestRallR(const Camtest::TestRallR &m)
+{
+    QString e = "response: "+m.msg+"\nerr: "+m.err;
+    ui->label_msg->setText(e);
+}
+
 void MainWindow::setUi_TestSyncR(const Camtest::TestSyncR &m)
 {
     ui->label_msg->setText(m.msg);
@@ -401,5 +407,14 @@ void MainWindow::on_pushButton_sync_stop_clicked()
 {
     auto m = Camtest::StopRecSync();
     setUi_StopRecSyncR(m);
+}
+
+
+void MainWindow::on_pushButton_test1_clicked()
+{
+    QString path = R"(set_cam_settings)";
+    QString q = R"(brightness=43&contrast=51&saturation=51&gain=49&awb=1)";
+    auto m = Camtest::TestCall(path, q);
+    setUi_TestRallR(m);
 }
 

@@ -358,6 +358,16 @@ auto Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1) -> bool
 //set_td_replacefcs
 
 //isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval[ms];total[MB];free[MB]
+
+auto Camtest::TestCall(const QString& p, const QString& q) ->TestRallR
+{
+    TestRallR e;
+    QString err;
+    auto a = _d->download(p,q,&e.err);
+    e.msg = QString(a);
+    return e;
+}
+
 auto Camtest::GetCamStatus() -> Camtest::Status
 {
     Camtest::Status s;

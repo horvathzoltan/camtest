@@ -130,6 +130,14 @@ public:
     static TestSyncR TestSync();
 
     static void AppendLine(QString *msg, const QString &a);
+
+    struct TestRallR{
+        QString msg;
+        QString err;
+    };
+
+    static TestRallR TestCall(const QString &p, const QString &u);
+
 private:
     static bool DeviceUpdateStorageStatus()
     {
