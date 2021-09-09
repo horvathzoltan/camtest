@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QtMath>
 #include <Qt>
+#include "raspicamtypes.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &MainWindow::on_timer_timeout);
+    connect(timer, &QTimer::timeout, this, &MainWindow::on_timerTimeout);
 
     ui->label_pic->installEventFilter( this );
     _eventFilter = new LabelEventFilter();//, clicked);
@@ -192,7 +193,7 @@ void MainWindow::on_radioButton_stop_clicked()
     setUi(m);
 }
 
-void MainWindow::on_timer_timeout()
+void MainWindow::on_timerTimeout()
 {
     auto p = Camtest::GetPixmap(ui->checkBox_mvis->isChecked());
     if(!p.isNull())
@@ -221,10 +222,11 @@ void MainWindow::setUi(const Camtest::StartR& m){
         else ui->radioButton_stop->setChecked(true);
 
     }
-    setLabelB(m._settings.brightnest);
+    setLabelB(m._settings.brightness);
     setLabelC(m._settings.contrast);
     setLabelS(m._settings.saturation);
-    setLabelG(m._settings.gain);
+    setLabelISO(m._settings.iso);
+    setLabelWB(m._settings.wb);
 }
 
 void MainWindow::setUi(const Camtest::StopR& m){
@@ -260,8 +262,12 @@ void MainWindow::setUi(const Camtest::UploadR& m){
 void MainWindow::setLabelB(int i){ ui->label_b->setText(QString::number(i));}
 void MainWindow::setLabelC(int i){ ui->label_c->setText(QString::number(i));}
 void MainWindow::setLabelS(int i){ ui->label_s->setText(QString::number(i));}
-void MainWindow::setLabelG(int i){ ui->label_g->setText(QString::number(i));}
-void MainWindow::setLabelWB(int i){ ui->label_wb->setText(QString::number(i));}
+void MainWindow::setLabelISO(int i){ ui->label_iso->setText(QString::number(i));}
+void MainWindow::setLabelWB(int i){ui->label_wb->setText(WbToString(i));
+
+}
+
+
 
 void MainWindow::on_pushButton_bp_clicked()
 {
@@ -293,14 +299,14 @@ void MainWindow::on_pushButton_sp_clicked()
     setLabelS(Camtest::saturation_m());
 }
 
-void MainWindow::on_pushButton_gp_clicked()
+void MainWindow::on_pushButton_isop_clicked()
 {
-    setLabelG(Camtest::gain_p());
+    setLabelISO(Camtest::iso_p());
 }
 
-void MainWindow::on_pushButton_gm_clicked()
+void MainWindow::on_pushButton_isom_clicked()
 {
-    setLabelG(Camtest::gain_m());
+    setLabelISO(Camtest::iso_m());
 }
 
 void MainWindow::on_pushButton_wbp_clicked()
@@ -325,15 +331,15 @@ void MainWindow::setUi(const Camtest::UpdateR& m){
 
 //pushButton_shutdown
 
-void MainWindow::on_pushButton_shutdown_clicked()
+void MainWindow::on_pushButton_restart_clicked()
 {
-    ui->label_msg->setText(QStringLiteral("Waiting for shutdown..."));
-    setUi(Camtest::Shutdown());
+    ui->label_msg->setText(QStringLiteral("Waiting for restart..."));
+    setUi(Camtest::Restart());
 }
 
-void MainWindow::setUi(const Camtest::ShutdownR& m){
+void MainWindow::setUi(const Camtest::RestartR& m){
 
-    ui->label_msg->setText(QStringLiteral("Shutdown ")+(m.isOk?"ok\n":"error\n")+m.msg);
+    ui->label_msg->setText(QStringLiteral("Restart ")+(m.isOk?"ok\n":"error\n")+m.msg);
     ui->radioButton_stop->setChecked(true);
 }
 
@@ -348,6 +354,11 @@ void MainWindow::setUi_StopRec(const Camtest::StopRecR &m)
 }
 
 void MainWindow::setUi_StartRecSyncR(const Camtest::StartRecSyncR &m)
+{
+    ui->label_msg->setText(m.msg);
+}
+
+void MainWindow::setUi_StopRecSyncR(const Camtest::StopRecSyncR &m)
 {
     ui->label_msg->setText(m.msg);
 }
@@ -383,5 +394,12 @@ void MainWindow::on_pushButton_clicked()
 {
     auto m = Camtest::TestSync();
     setUi_TestSyncR(m);
+}
+
+
+void MainWindow::on_pushButton_sync_stop_clicked()
+{
+    auto m = Camtest::StopRecSync();
+    setUi_StopRecSyncR(m);
 }
 

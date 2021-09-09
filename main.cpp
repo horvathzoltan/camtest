@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "settings.h"
-
+#include "common/logger/log.h"
 #include <QApplication>
 /*
 001001a
@@ -33,8 +33,12 @@ Settings _settings(
 
 auto main(int argc, char *argv[]) -> int
 {
+    Log::init(Errlevels::ERROR_,
+              Dbglevels::DEBUG, nullptr, false, nullptr, false);
+
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
-    return QApplication::exec();
+    auto b =  a.exec();
+    return b;
 }

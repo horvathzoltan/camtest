@@ -103,6 +103,7 @@ HEADERS += \
     labeleventfilter.h \
     mainwindow.h \
     networkhelper.h \
+    raspicamtypes.h \
     settings.h \
     sqlhelper.h
 

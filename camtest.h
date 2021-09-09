@@ -11,10 +11,11 @@ class Camtest
 {
 public:
     struct CamSettings{
-        int brightnest;
+        int brightness;
         int contrast;
         int saturation;
-        int gain;
+        //int gain;
+        int iso;
         int wb;
     };
 
@@ -77,8 +78,8 @@ public:
     static int contrast_m();
     static int saturation_p();
     static int saturation_m();
-    static int gain_p();
-    static int gain_m();
+    static int iso_p();
+    static int iso_m();
     static int wb_p();
     static int wb_m();
 
@@ -90,12 +91,12 @@ public:
 
     static Camtest::UpdateR Update();
 
-    struct ShutdownR
+    struct RestartR
     {
         bool isOk;
         QString msg;
     };
-    static Camtest::ShutdownR Shutdown();
+    static Camtest::RestartR Restart();
 
     struct StartRecR{
         QString msg;
@@ -114,6 +115,13 @@ public:
     };
 
     static Camtest::StartRecSyncR StartRecSync();
+
+    struct StopRecSyncR{
+        QString msg;
+    };
+
+    static Camtest::StopRecSyncR StopRecSync();
+
 
     struct TestSyncR{
         QString msg;
@@ -145,10 +153,10 @@ private:
         return b;
     }
 
-    static QString DeviceShutdown()
+    static QString DeviceRestart()
     {
         if(!_d) return nullptr;
-        auto a = _d->download("shutdown", "");
+        auto a = _d->download("restart", "");
         return a;
     }
     /*
@@ -200,7 +208,7 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
     static bool DeviceStartRec(const QString& fn, bool isSync = false){
         if(!_d) return false;
         QString q =
-            QStringLiteral("videofolder=%1/cam1&data_mode=0&file_mode=0&sec=10").arg(fn);
+            QStringLiteral("videofolder=%1/front_cam&data_mode=0&file_mode=0&sec=10").arg(fn);
         if(isSync) q+="&sync";
         auto a = _d->download("set_rec_start", q);
         return a.startsWith("ok");

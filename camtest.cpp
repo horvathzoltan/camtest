@@ -65,13 +65,13 @@ auto Camtest::setCamSettings(const QString& s, int i) -> int
 auto Camtest::brightnest_p() -> int
 {
     GetCamSettings();
-    return setCamSettings(QStringLiteral("brightness"),++_camSettings.brightnest);
+    return setCamSettings(QStringLiteral("brightness"),++_camSettings.brightness);
 }
 
 auto Camtest::brightnest_m() -> int
 {
     GetCamSettings();
-    return setCamSettings(QStringLiteral("brightness"),--_camSettings.brightnest);
+    return setCamSettings(QStringLiteral("brightness"),--_camSettings.brightness);
 }
 
 auto Camtest::contrast_p() -> int
@@ -98,16 +98,16 @@ auto Camtest::saturation_m() -> int
     return setCamSettings(QStringLiteral("saturation"),--_camSettings.saturation);
 }
 
-auto Camtest::gain_p() -> int
+auto Camtest::iso_p() -> int
 {
     GetCamSettings();
-    return setCamSettings(QStringLiteral("gain"),++_camSettings.gain);
+    return setCamSettings(QStringLiteral("iso"),_camSettings.iso+=50);
 }
 
-auto Camtest::gain_m() -> int
+auto Camtest::iso_m() -> int
 {
     GetCamSettings();
-    return setCamSettings(QStringLiteral("gain"),--_camSettings.gain);
+    return setCamSettings(QStringLiteral("iso"),_camSettings.iso-=50);
 }
 /**/
 
@@ -312,10 +312,10 @@ auto Camtest::GetCamSettings() -> bool
     auto b = a.split(';');
     if(b.length()<5) return false;
     bool isok;
-    _camSettings.brightnest=b[0].toInt(&isok);
+    _camSettings.brightness=b[0].toInt(&isok);
     _camSettings.contrast=b[1].toInt(&isok);
     _camSettings.saturation=b[2].toInt(&isok);
-    _camSettings.gain=b[3].toInt(&isok);
+    _camSettings.iso=b[3].toInt(&isok);
     _camSettings.wb=b[4].toInt(&isok);
 
     return true;
@@ -389,7 +389,8 @@ auto Camtest::GetPicture(bool isMvis)-> QByteArray
 {
     QString q(QStringLiteral("format=jpeg&mode=0"));
     if(isMvis) q+=QStringLiteral("&mvis");
-    return Camtest::_d->download(QStringLiteral("get_pic"), q);
+    auto a =  Camtest::_d->download(QStringLiteral("get_pic"), q);
+    return a;
 }
 
 
@@ -397,7 +398,20 @@ auto Camtest::GetPixmap(bool isMvis) -> QPixmap
 {
     QByteArray b = GetPicture(isMvis);
     QPixmap p;
-    if(b.length()>100) p.loadFromData(b,"JPG");
+
+    if(b.length()>100){
+        p.loadFromData(b,"JPG");
+    } else {
+        auto btxt = QString(b);
+        zInfo("getpic: "+btxt);
+        static auto const error = QStringLiteral("error:");
+        if(btxt.startsWith(error)){
+            auto errortxt = btxt.mid(error.length());
+            if(errortxt=="not_opened"){
+                Camtest::OpenCamera();
+            }
+        }
+    }
     return p;
 }
 
@@ -505,7 +519,7 @@ auto Camtest::Update() -> Camtest::UpdateR
 }
 
 
-auto Camtest::Shutdown() -> Camtest::ShutdownR
+auto Camtest::Restart() -> Camtest::RestartR
 {
     QString msg;
 
@@ -516,7 +530,7 @@ auto Camtest::Shutdown() -> Camtest::ShutdownR
         return {false, msg};
     }
 
-    DeviceShutdown();
+    DeviceRestart();
 
     int i;
     bool ping;
@@ -600,7 +614,9 @@ auto Camtest::StartRecSync() -> Camtest::StartRecSyncR
     if(status.isRec) return {"recording in progress"};
     if(status.isActive) return {"recording timer is active"};
 
-    QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
+    auto most = QDateTime::currentDateTime();
+    QString timestamp = most.toString("yyyyMMdd-hhmmss");
+    auto timestampMs = most.toString(Qt::ISODateWithMs);
     QString fn = "sync_many_"+timestamp;
     auto isrecok = DeviceStartRec(fn, true);
     if(!isrecok) return{"cannot start recording"};
@@ -612,12 +628,93 @@ auto Camtest::StartRecSync() -> Camtest::StartRecSyncR
     a.append(reinterpret_cast<char*>(&t), sizeof(t));
 
     QHostAddress aa = NetworkHelper::BroadcastAddress(CamUrl);
-    NetworkHelper::sendUDP(aa, 1998, a);
+
+    //QElapsedTimer et;
+    //et.start();
+    static const int PMAX = 2;
+    static const int BMAX = 5;
+    unsigned long PTIME = 50;
+    unsigned long BTIME = 10;
+
+    for(int i=0;i<PMAX;i++){
+        for(int j=0;j<BMAX;j++){
+            NetworkHelper::sendUDP(aa, 1998, a);
+            QThread::msleep(1<BMAX-j?BTIME:PTIME);
+        }
+    }
 
     status = DeviceGetCamStatus();
-    if(status.isRec) AppendLine(&r.msg,"recording in progress");
-    if(status.isActive) AppendLine(&r.msg, "recording timer is active");
+    if(status.isRec) AppendLine(&r.msg,
+                   QStringLiteral("recording in progress"));
+    if(status.isActive) AppendLine(&r.msg,
+                   QStringLiteral("recording timer is active"));
     AppendLine(&r.msg, fn);
+    AppendLine(&r.msg, timestampMs);
+
+    return r;
+}
+
+auto Camtest::StopRecSync() -> Camtest::StopRecSyncR
+{
+    StopRecSyncR r;
+    if(!_d) return {"no camera"};
+//    bool isactive = DeviceActive();
+//    if(!isactive) return {"device is not active"};
+//    auto storagestatus = DeviceGetStorageStatusImages();
+//    if(!storagestatus){
+//        auto mountstatus = DeviceMountStorageImages();
+//        if(!mountstatus) {
+//            return {"cannot mount storage 'images'"};
+//        }
+//    }
+
+//    auto status = DeviceGetCamStatus();
+
+//    if(!status.isOpened){
+//        auto isopen = OpenCamera();
+//        if(!isopen) return {"cannot open"};
+//        status = DeviceGetCamStatus();
+//    }
+//    if(status.isRec) return {"recording in progress"};
+//    if(status.isActive) return {"recording timer is active"};
+
+//    auto most = QDateTime::currentDateTime();
+//    QString timestamp = most.toString("yyyyMMdd-hhmmss");
+//    auto timestampMs = most.toString(Qt::ISODateWithMs);
+//    QString fn = "sync_many_"+timestamp;
+//    auto isrecok = DeviceStartRec(fn, true);
+//    if(!isrecok) return{"cannot start recording"};
+
+    //qint64 t = 3000;
+    //if(QSysInfo::ByteOrder==QSysInfo::Endian::BigEndian) t = qToLittleEndian(t);
+    QByteArray a;
+    a.append(Commands::StopRec);
+    //a.append(reinterpret_cast<char*>(&t), sizeof(t));
+
+    QHostAddress aa = NetworkHelper::BroadcastAddress(CamUrl);
+
+    //QElapsedTimer et;
+    //et.start();
+    static const int PMAX = 2;
+    static const int BMAX = 5;
+    unsigned long PTIME = 50;
+    unsigned long BTIME = 10;
+
+    for(int i=0;i<PMAX;i++){
+        for(int j=0;j<BMAX;j++){
+            NetworkHelper::sendUDP(aa, 1998, a);
+            QThread::msleep(1<BMAX-j?BTIME:PTIME);
+        }
+    }
+
+//    status = DeviceGetCamStatus();
+//    if(status.isRec) AppendLine(&r.msg,
+//                   QStringLiteral("recording in progress"));
+//    if(status.isActive) AppendLine(&r.msg,
+//                   QStringLiteral("recording timer is active"));
+//    AppendLine(&r.msg, fn);
+//    AppendLine(&r.msg, timestampMs);
+
     return r;
 }
 

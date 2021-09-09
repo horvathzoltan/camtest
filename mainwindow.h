@@ -24,7 +24,7 @@ public:
     void setLabelB(int i);
     void setLabelC(int i);
     void setLabelS(int i);
-    void setLabelG(int i);
+    void setLabelISO(int i);
     void setLabelWB(int i);
 
     void on_fc_clicked(const QPoint &p);
@@ -42,14 +42,16 @@ public:
     bool SetCamD();
     void on_f_clicked(const QPoint &p);
     bool SetCamF();
+
     void setUi_TestSyncR(const Camtest::TestSyncR &m);
+    void setUi_StopRecSyncR(const Camtest::StopRecSyncR &m);
 private slots:
     void on_clicked(QPoint p);
 
     void on_radioButton_start_clicked();
 
     void on_radioButton_stop_clicked();
-    void on_timer_timeout();
+    void on_timerTimeout();
     void on_pushButton_upload_clicked();
 
     void on_pushButton_bp_clicked();
@@ -64,9 +66,9 @@ private slots:
 
     void on_pushButton_sp_clicked();
 
-    void on_pushButton_gp_clicked();
+    void on_pushButton_isop_clicked();
 
-    void on_pushButton_gm_clicked();
+    void on_pushButton_isom_clicked();
 
     void on_pushButton_wbp_clicked();
 
@@ -74,7 +76,7 @@ private slots:
 
     void on_pushButton_update_clicked();
 
-    void on_pushButton_shutdown_clicked();
+    void on_pushButton_restart_clicked();
 
     void on_pushButton_rec_clicked();
 
@@ -83,6 +85,8 @@ private slots:
     void on_pushButton_sync_rec_clicked();
 
     void on_pushButton_clicked();
+
+    void on_pushButton_sync_stop_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -94,7 +98,7 @@ private:
     void setUi(const Camtest::StopR&);
     void setUi(const Camtest::UploadR &m);
     void setUi(const Camtest::UpdateR &m);
-    void setUi(const Camtest::ShutdownR &m);
+    void setUi(const Camtest::RestartR &m);
 
     void setUi_StartRec(const Camtest::StartRecR &m);
     void setUi_StopRec(const Camtest::StopRecR &m);
