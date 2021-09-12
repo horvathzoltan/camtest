@@ -26,6 +26,7 @@ public:
     void setLabelS(int i);
     void setLabelISO(int i);
     void setLabelWB(int i);
+    void setLabelExp(int i);
 
     void on_fc_clicked(const QPoint &p);
 
@@ -91,17 +92,25 @@ private slots:
 
     void on_pushButton_test1_clicked();
 
+    void on_pushButton_test2_clicked();
+
+    void on_pushButton_test3_clicked();
+
+    void on_pushButton_p_exp_clicked();
+
+    void on_pushButton_m_exp_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
     LabelEventFilter* _eventFilter;
     DStatus* _d_status=nullptr;
     bool _camera_active;
-    void setUi(const Camtest::StartR&);
-    void setUi(const Camtest::StopR&);
-    void setUi(const Camtest::UploadR &m);
-    void setUi(const Camtest::UpdateR &m);
-    void setUi(const Camtest::RestartR &m);
+    void setUi_StartR(const Camtest::StartR&);
+    void setUi_StopR(const Camtest::StopR&);
+    void setUi_UploadR(const Camtest::UploadR &m);
+    void setUi_UpdateR(const Camtest::UpdateR &m);
+    void setUi_RestartR(const Camtest::RestartR &m);
 
     void setUi_StartRec(const Camtest::StartRecR &m);
     void setUi_StopRec(const Camtest::StopRecR &m);

@@ -91,6 +91,7 @@ DEPENDPATH += $$HOME/common
 
 SOURCES += \
     camtest.cpp \
+    downloadhelper.cpp \
     labeleventfilter.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -100,6 +101,7 @@ SOURCES += \
 
 HEADERS += \
     camtest.h \
+    downloadhelper.h \
     labeleventfilter.h \
     mainwindow.h \
     networkhelper.h \

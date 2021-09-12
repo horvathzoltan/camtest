@@ -32,11 +32,11 @@ Settings _settings(
 
 
 auto main(int argc, char *argv[]) -> int
-{
+{    
+    QApplication a(argc, argv);
     Log::init(Errlevels::ERROR_,
               Dbglevels::DEBUG, nullptr, false, nullptr, false);
 
-    QApplication a(argc, argv);
     MainWindow w;
     w.show();
     auto b =  a.exec();

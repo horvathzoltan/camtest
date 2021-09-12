@@ -21,7 +21,8 @@ extern Settings _settings;
 
 //QString Camtest::CamIp = QStringLiteral("http://172.16.3.103:1997");
 QUrl Camtest::CamUrl;// = QUrl(QStringLiteral("http://172.16.3.103:1997"));
-com::helper::Downloader* Camtest::_d = nullptr;
+//com::helper::Downloader* Camtest::_d = nullptr;
+DownloadHelper Camtest::_downloadHelper;
 Camtest::CamSettings Camtest::_camSettings;
 // ping cél ip
 // ha ok, akkor arp -a cél ip -> mac addr
@@ -55,72 +56,134 @@ Camtest::CamSettings Camtest::_camSettings;
 //    return most_recent;
 //}
 
-auto Camtest::setCamSettings(const QString& s, int i) -> int
+auto Camtest::setCamSettings(const QString& s, int i) -> bool
 {
-    if(!_d) return -1;
-    Camtest::_d->download(QStringLiteral("set_cam_settings"), s+'='+QString::number(i));
-    return i;
+    auto r = _downloadHelper.download(QStringLiteral("set_cam_settings"),
+                          s+'='+QString::number(i));
+    return r.errmsg.isEmpty() && r.content=="ok";
 }
+
+auto Camtest::exposure_p() -> int
+{
+    static const QString key = nameof(_camSettings.exposure);
+    GetCamSettings();
+    int u = _camSettings.exposure+1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.exposure = u;
+    return _camSettings.exposure;
+}
+
+auto Camtest::exposure_m() -> int
+{
+    static const QString key = nameof(_camSettings.exposure);
+    GetCamSettings();
+    int u = _camSettings.exposure-1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.exposure = u;
+    return _camSettings.exposure;
+}
+
 
 auto Camtest::brightnest_p() -> int
 {
+    static const QString key = nameof(_camSettings.brightness);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("brightness"),++_camSettings.brightness);
+    int u = _camSettings.brightness+1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.brightness = u;
+    return _camSettings.brightness;
 }
 
 auto Camtest::brightnest_m() -> int
 {
+    static const QString key = nameof(_camSettings.brightness);
+
     GetCamSettings();
-    return setCamSettings(QStringLiteral("brightness"),--_camSettings.brightness);
+    int u = _camSettings.brightness-1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.brightness = u;
+    return _camSettings.brightness;
 }
 
 auto Camtest::contrast_p() -> int
 {
+    static const QString key = nameof(_camSettings.contrast);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("contrast"),++_camSettings.contrast);
+    int u = _camSettings.contrast+1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.contrast = u;
+    return _camSettings.contrast;
 }
 
 auto Camtest::contrast_m() -> int
 {
+    static const QString key = nameof(_camSettings.contrast);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("contrast"),--_camSettings.contrast);
+    int u = _camSettings.contrast-1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.contrast = u;
+    return _camSettings.contrast;
 }
 
 auto Camtest::saturation_p() -> int
 {
+    static const QString key = nameof(_camSettings.saturation);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("saturation"),++_camSettings.saturation);
+    int u = _camSettings.saturation+1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.saturation = u;
+    return _camSettings.saturation;
 }
 
 auto Camtest::saturation_m() -> int
 {
+    static const QString key = nameof(_camSettings.saturation);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("saturation"),--_camSettings.saturation);
+    int u = _camSettings.saturation-1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.saturation = u;
+    return _camSettings.saturation;
 }
 
 auto Camtest::iso_p() -> int
 {
+    static const QString key = nameof(_camSettings.iso);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("iso"),_camSettings.iso+=50);
+    int u = _camSettings.iso+50;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.iso = u;
+    return _camSettings.iso;
 }
 
 auto Camtest::iso_m() -> int
 {
+    static const QString key = nameof(_camSettings.iso);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("iso"),_camSettings.iso-=50);
+    int u = _camSettings.iso-50;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.iso = u;
+    return _camSettings.iso;
 }
 /**/
 
 auto Camtest::wb_p() -> int
 {
+    static const QString key = nameof(_camSettings.awb);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("awb"),++_camSettings.wb);
+    int u = _camSettings.awb+1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.awb = u;
+    return _camSettings.awb;
 }
 
 auto Camtest::wb_m() -> int
 {
+    static const QString key = nameof(_camSettings.awb);
     GetCamSettings();
-    return setCamSettings(QStringLiteral("awb"),--_camSettings.wb);
+    int u = _camSettings.awb-1;
+    auto r = setCamSettings(key,u);
+    if(r) _camSettings.awb = u;
+    return _camSettings.awb;
 }
 /**/
 
@@ -188,8 +251,8 @@ auto Camtest::Start() -> Camtest::StartR{
 
     CamUrl = QUrl(QStringLiteral("http://%1:%2").arg(cam_ip).arg(cam_p));
 
-    delete _d;
-    _d = new com::helper::Downloader(CamUrl.toString());
+    _downloadHelper.uninit();
+    _downloadHelper.init(new com::helper::Downloader(CamUrl.toString()));
 
     QString driver = QStringLiteral("QODBC");//"QODBC";
     QString dbname = QStringLiteral("BuildInfoFlex");
@@ -307,16 +370,17 @@ auto Camtest::Start() -> Camtest::StartR{
 
 auto Camtest::GetCamSettings() -> bool
 {
-    auto a = _d->download(QStringLiteral("get_cam_settings"), QLatin1String(""));
-    if(a.isEmpty()) return false;
-    auto b = a.split(';');
+    auto a = _downloadHelper.download(QStringLiteral("get_cam_settings"), QLatin1String(""));
+    if(a.content.isEmpty()) return false;
+    auto b = a.content.split(';');
     if(b.length()<5) return false;
     bool isok;
     _camSettings.brightness=b[0].toInt(&isok);
     _camSettings.contrast=b[1].toInt(&isok);
     _camSettings.saturation=b[2].toInt(&isok);
     _camSettings.iso=b[3].toInt(&isok);
-    _camSettings.wb=b[4].toInt(&isok);
+    _camSettings.awb=b[4].toInt(&isok);
+    _camSettings.exposure=b[5].toInt(&isok);
 
     return true;
 }
@@ -325,9 +389,9 @@ auto Camtest::ClearCamSettings(int id) -> bool
 {
     Q_UNUSED(id)
 
-    auto a = Camtest::_d->download(QStringLiteral("set_td_d"), QStringLiteral("id=0&min=-1&max=-1"));
-    a = Camtest::_d->download(QStringLiteral("set_td_field"), QStringLiteral("id=0&x1=-1&y1=-1&&x2=-1&y2=-1"));
-    a = Camtest::_d->download(QStringLiteral("set_td_clearfc"), QStringLiteral("id=0"));
+    auto a = _downloadHelper.download(QStringLiteral("set_td_d"), QStringLiteral("id=0&min=-1&max=-1"));
+    a = _downloadHelper.download(QStringLiteral("set_td_field"), QStringLiteral("id=0&x1=-1&y1=-1&&x2=-1&y2=-1"));
+    a = _downloadHelper.download(QStringLiteral("set_td_clearfc"), QStringLiteral("id=0"));
 
     //auto a = Camtest::_d.download("set_td_reset", "&id=0");
 
@@ -338,7 +402,7 @@ auto Camtest::ClearCamSettings(int id) -> bool
 auto  Camtest::SetCalD(int id, qreal dmin, qreal dmax) -> bool
 {    
     auto q = QStringLiteral("id=%1&min=%2&max=%2").arg(id).arg(dmin).arg(dmax);
-    auto a = Camtest::_d->download(QStringLiteral("set_td_d"), q);
+    auto a = _downloadHelper.download(QStringLiteral("set_td_d"), q);
     return true;
 }
 
@@ -347,7 +411,7 @@ auto  Camtest::SetCalD(int id, qreal dmin, qreal dmax) -> bool
 auto Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1) -> bool
 {
     auto q = QStringLiteral("id=%1&x1=%2&y1=%2&x2=%3&y2=%4").arg(id).arg(x0).arg(y0).arg(x1).arg(y1);
-    auto a = Camtest::_d->download(QStringLiteral("set_td_d"), q);
+    auto a = _downloadHelper.download(QStringLiteral("set_td_d"), q);
     return true;
 }
 
@@ -362,18 +426,20 @@ auto Camtest::SetCalF(int id, qreal x0, qreal y0, qreal x1, qreal y1) -> bool
 auto Camtest::TestCall(const QString& p, const QString& q) ->TestRallR
 {
     TestRallR e;
-    QString err;
-    auto a = _d->download(p,q,&e.err);
-    e.msg = QString(a);
+
+    auto a = _downloadHelper.download(p,q);
+    e.request = _downloadHelper.url();
+    e.err = a.errmsg;
+    e.msg = QString(a.content);
     return e;
 }
 
 auto Camtest::GetCamStatus() -> Camtest::Status
 {
     Camtest::Status s;
-    auto a = Camtest::_d->download(QStringLiteral("get_cam_status"), QLatin1String(""));
-    if(a.isEmpty()) return s;
-    auto b = a.split(';');
+    auto a = _downloadHelper.download(QStringLiteral("get_cam_status"), QLatin1String(""));
+    if(a.content.isEmpty()) return s;
+    auto b = a.content.split(';');
     if(b.length()<9) return s;
     s.isValid = true;
     bool isok;
@@ -399,8 +465,8 @@ auto Camtest::GetPicture(bool isMvis)-> QByteArray
 {
     QString q(QStringLiteral("format=jpeg&mode=0"));
     if(isMvis) q+=QStringLiteral("&mvis");
-    auto a =  Camtest::_d->download(QStringLiteral("get_pic"), q);
-    return a;
+    auto a =  _downloadHelper.download(QStringLiteral("get_pic"), q);
+    return a.content;
 }
 
 
@@ -463,13 +529,14 @@ auto Camtest::Upload(const QString& fn) -> Camtest::UploadR
 // minden fájl küldéskor kap egy kulcsot
 auto Camtest::UploadMetaData(const QString& fn, int len) -> QString
 {
-    QString key = _d->download(QStringLiteral("upload_meta"), "fn="+fn+"len="+QString::number(len));
+    auto a = _downloadHelper.download(QStringLiteral("upload_meta"), "fn="+fn+"len="+QString::number(len));
+    QString key(a.content);
     return key;
 }
 
 void Camtest::UploadData(const QString& key, const QByteArray& data){
     QString err;
-    _d->post(QStringLiteral("upload"), "key="+key, &err, data);
+    auto r = _downloadHelper.post(QStringLiteral("upload"), "key="+key,data);
 }
 
 // UploadNext visszaküldi a fogadott length-t
@@ -478,7 +545,8 @@ void Camtest::UploadData(const QString& key, const QByteArray& data){
 //-2 hiba volt, újra
 auto Camtest::UploadNext(const QString& key) -> int
 {
-    QString b = _d->download(QStringLiteral("upload_length"), QStringLiteral("key=")+key);
+    auto r = _downloadHelper.download(QStringLiteral("upload_length"), QStringLiteral("key=")+key);
+    QString b = r.content;
     //b nem lehet busy, timeout vagy egyéb balgaság
     bool ok;
     int ix = b.toInt(&ok);
@@ -561,7 +629,8 @@ auto Camtest::Restart() -> Camtest::RestartR
 auto Camtest::StartRecording() -> Camtest::StartRecR
 {
     Camtest::StartRecR r;
-    if(!_d) return {"no camera"};
+    if(_downloadHelper.url().isEmpty()) return {"no camera"};
+    //if(!_d) return {"no camera"};
     bool isactive = DeviceActive();
     if(!isactive) return {"device is not active"};
     auto storagestatus = DeviceGetStorageStatusImages();
@@ -592,7 +661,8 @@ auto Camtest::StartRecording() -> Camtest::StartRecR
 
 auto Camtest::StopRecording() -> StopRecR
 {
-    if(!_d) return {"no camera"};
+    //if(!_d) return {"no camera"};
+    if(_downloadHelper.url().isEmpty()) return {"no camera"};
     bool isactive = DeviceActive();
     if(!isactive) return {"device is not active"};
     auto a = DeviceStopRec();
@@ -603,7 +673,8 @@ auto Camtest::StopRecording() -> StopRecR
 auto Camtest::StartRecSync() -> Camtest::StartRecSyncR
 {
     StartRecSyncR r;
-    if(!_d) return {"no camera"};
+    //if(!_d) return {"no camera"};
+    if(_downloadHelper.url().isEmpty()) return {"no camera"};
     bool isactive = DeviceActive();
     if(!isactive) return {"device is not active"};
     auto storagestatus = DeviceGetStorageStatusImages();
@@ -667,7 +738,8 @@ auto Camtest::StartRecSync() -> Camtest::StartRecSyncR
 auto Camtest::StopRecSync() -> Camtest::StopRecSyncR
 {
     StopRecSyncR r;
-    if(!_d) return {"no camera"};
+    //if(!_d) return {"no camera"};
+    if(_downloadHelper.url().isEmpty()) return {"no camera"};
 //    bool isactive = DeviceActive();
 //    if(!isactive) return {"device is not active"};
 //    auto storagestatus = DeviceGetStorageStatusImages();
@@ -737,8 +809,8 @@ void Camtest::AppendLine(QString *msg, const QString& a)
 
 auto Camtest::TestSync() -> TestSyncR
 {
-    if(!_d) return {"no camera"};
-
+    //if(!_d) return {"no camera"};
+    if(_downloadHelper.url().isEmpty()) return {"no camera"};
     QHostAddress b = NetworkHelper::BroadcastAddress(CamUrl);
     QString aa = QStringLiteral("10.10.10.255");
     QByteArray a;

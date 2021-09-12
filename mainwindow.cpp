@@ -184,13 +184,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_radioButton_start_clicked()
 {
-    setUi(Camtest::Start());    
+    Camtest::StartR m = Camtest::Start();
+    setUi_StartR(m);
 }
 
 void MainWindow::on_radioButton_stop_clicked()
 {        
     auto m = Camtest::Stop();
-    setUi(m);
+    setUi_StopR(m);
 }
 
 void MainWindow::on_timerTimeout()
@@ -206,7 +207,7 @@ void MainWindow::on_timerTimeout()
     }
 }
 
-void MainWindow::setUi(const Camtest::StartR& m){
+void MainWindow::setUi_StartR(const Camtest::StartR& m){
     _camera_active = m.isActive;
     ui->label_txt->setText(m.msg);
     ui->label_serial->setText(m.serial);
@@ -226,10 +227,11 @@ void MainWindow::setUi(const Camtest::StartR& m){
     setLabelC(m._settings.contrast);
     setLabelS(m._settings.saturation);
     setLabelISO(m._settings.iso);
-    setLabelWB(m._settings.wb);
+    setLabelWB(m._settings.awb);
+    setLabelExp(m._settings.exposure);
 }
 
-void MainWindow::setUi(const Camtest::StopR& m){
+void MainWindow::setUi_StopR(const Camtest::StopR& m){
     Q_UNUSED(m)
 
     timer->stop();
@@ -251,27 +253,26 @@ void MainWindow::on_pushButton_upload_clicked()
     }
     if(_camera_active && !timer->isActive())
     {
-        setUi(Camtest::Upload("kurutty.txt"));
+        setUi_UploadR(Camtest::Upload("kurutty.txt"));
     }
 }
 
-void MainWindow::setUi(const Camtest::UploadR& m){
+void MainWindow::setUi_UploadR(const Camtest::UploadR& m){
     ui->label_pic->setText(m.err);    
 }
 
-void MainWindow::setLabelB(int i){ ui->label_b->setText(QString::number(i));}
-void MainWindow::setLabelC(int i){ ui->label_c->setText(QString::number(i));}
+void MainWindow::setLabelB(int i){ui->label_b->setText(QString::number(i));}
+void MainWindow::setLabelC(int i){ui->label_c->setText(QString::number(i));}
 void MainWindow::setLabelS(int i){ ui->label_s->setText(QString::number(i));}
 void MainWindow::setLabelISO(int i){ ui->label_iso->setText(QString::number(i));}
-void MainWindow::setLabelWB(int i){ui->label_wb->setText(WbToString(i));
-
-}
-
+void MainWindow::setLabelWB(int i){ui->label_wb->setText(WbToString(i));}
+void MainWindow::setLabelExp(int i){ui->label_exp->setText(ExtToString(i));}
 
 
 void MainWindow::on_pushButton_bp_clicked()
 {
-    setLabelB(Camtest::brightnest_p());
+    auto r = Camtest::brightnest_p();
+    setLabelB(r);
 }
 
 void MainWindow::on_pushButton_bm_clicked()
@@ -321,10 +322,10 @@ void MainWindow::on_pushButton_wbm_clicked()
 
 void MainWindow::on_pushButton_update_clicked()
 {
-    setUi(Camtest::Update());
+    setUi_UpdateR(Camtest::Update());
 }
 
-void MainWindow::setUi(const Camtest::UpdateR& m){
+void MainWindow::setUi_UpdateR(const Camtest::UpdateR& m){
 
     ui->label_msg->setText((m.isOk?"ok\n":"error\n")+m.msg);
 }
@@ -334,12 +335,14 @@ void MainWindow::setUi(const Camtest::UpdateR& m){
 void MainWindow::on_pushButton_restart_clicked()
 {
     ui->label_msg->setText(QStringLiteral("Waiting for restart..."));
-    setUi(Camtest::Restart());
+    setUi_RestartR(Camtest::Restart());
 }
 
-void MainWindow::setUi(const Camtest::RestartR& m){
+void MainWindow::setUi_RestartR(const Camtest::RestartR& m){
 
-    ui->label_msg->setText(QStringLiteral("Restart ")+(m.isOk?"ok\n":"error\n")+m.msg);
+    ui->label_msg->setText(QStringLiteral("Restart ")+
+                           (m.isOk?"ok\n":"error\n")+
+                           m.msg);
     ui->radioButton_stop->setChecked(true);
 }
 
@@ -365,7 +368,18 @@ void MainWindow::setUi_StopRecSyncR(const Camtest::StopRecSyncR &m)
 
 void MainWindow::setUi_TestRallR(const Camtest::TestRallR &m)
 {
-    QString e = "response: "+m.msg+"\nerr: "+m.err;
+    QString e;
+    if(!m.request.isEmpty()){
+        if(!e.isEmpty()) e+="\n\n";
+        e+="request: "+m.request;}
+    if(!m.msg.isEmpty()){
+        if(!e.isEmpty()) e+="\n\n";
+        e+="response: "+m.msg;
+    }
+    if(!m.err.isEmpty()){
+        if(!e.isEmpty()) e+="\n\n";
+        e+="err: "+m.err;
+    }
     ui->label_msg->setText(e);
 }
 
@@ -416,5 +430,37 @@ void MainWindow::on_pushButton_test1_clicked()
     QString q = R"(brightness=43&contrast=51&saturation=51&gain=49&awb=1)";
     auto m = Camtest::TestCall(path, q);
     setUi_TestRallR(m);
+}
+
+
+void MainWindow::on_pushButton_test2_clicked()
+{
+    QString path = R"(set_td_field)";
+    QString q = R"(id=5&x1=0.56&y1=0.38&x2=0.79&y2=0.58)";
+    auto m = Camtest::TestCall(path, q);
+    setUi_TestRallR(m);
+}
+
+
+void MainWindow::on_pushButton_test3_clicked()
+{
+    QString path = R"(set_td_d)";
+    QString q = R"(id=6&min=0.02&max=0.07)";
+    auto m = Camtest::TestCall(path, q);
+    setUi_TestRallR(m);
+}
+
+
+void MainWindow::on_pushButton_p_exp_clicked()
+{
+    auto r = Camtest::exposure_p();
+    setLabelExp(r);
+}
+
+
+void MainWindow::on_pushButton_m_exp_clicked()
+{
+    auto r = Camtest::exposure_m();
+    setLabelExp(r);
 }
 

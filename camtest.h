@@ -5,7 +5,7 @@
 #include <QPixmap>
 #include <QSqlDatabase>
 #include <QString>
-#include "common/helper/downloader/downloader.h"
+#include "downloadhelper.h"
 
 class Camtest
 {
@@ -16,10 +16,11 @@ public:
         int saturation;
         //int gain;
         int iso;
-        int wb;
+        int awb;
+        int exposure;
     };
 
-    static com::helper::Downloader* _d;
+
     static QUrl CamUrl;
 
     struct StartR{
@@ -32,17 +33,17 @@ public:
 
     static bool OpenCamera()
     {
-        if(!_d) return false;
-        return _d->download("set_cam_open", "")=="ok";
+       auto r = _downloadHelper.download("set_cam_open", "");
+       return r.content=="ok";
     }
 
     static bool CloseCamera()
     {
-        if(!_d) return false;
-        return _d->download("set_cam_close", "")=="ok";
+        auto r = _downloadHelper.download("set_cam_close", "");
+        return r.content =="ok";
     }
 
-
+    static DownloadHelper _downloadHelper;
     static CamSettings _camSettings;
     static StartR Start();
     struct StopR{};
@@ -71,7 +72,7 @@ public:
     //static QString GetDriverName();
 //    static QFileInfo GetMostRecent(const QString &path, const QString &pattern);
 
-    static int setCamSettings(const QString& s, int i);
+    static bool setCamSettings(const QString& s, int i);
     static int brightnest_p();
     static int brightnest_m();
     static int contrast_p();
@@ -82,6 +83,8 @@ public:
     static int iso_m();
     static int wb_p();
     static int wb_m();
+    static int exposure_p();
+    static int exposure_m();
 
     struct UpdateR
     {
@@ -132,58 +135,54 @@ public:
     static void AppendLine(QString *msg, const QString &a);
 
     struct TestRallR{
+        QString request;
         QString msg;
         QString err;
     };
 
     static TestRallR TestCall(const QString &p, const QString &u);
 
+
 private:
     static bool DeviceUpdateStorageStatus()
     {
-        if(!_d) return false;
-        auto a = _d->download("get_storage_status", "");
-        return a.startsWith("ok");
+        auto a = _downloadHelper.download("get_storage_status", "");
+        return a.content.startsWith("ok");
     }
 
     static bool DeviceMountStorage()
-    {
-        if(!_d) return false;
-        auto a = _d->download("set_storage_mount", "");
-        return a.startsWith("ok");
+    {        
+        auto a = _downloadHelper.download("set_storage_mount", "");
+        return a.content.startsWith("ok");
     }
 
     static bool DeviceActive()
     {
-        if(!_d) return false;
-        auto a = _d->download("active", "");
-        auto b = a=="active";
+        auto a = _downloadHelper.download("active", "");
+        auto b = a.content=="active";
         return b;
     }
 
     static QString DeviceRestart()
-    {
-        if(!_d) return nullptr;
-        auto a = _d->download("restart", "");
-        return a;
+    {        
+        auto a = _downloadHelper.download("restart", "");
+        return a.content;
     }
     /*
      * http://10.10.10.150:1997/get_storage_status?images
 status:_not_mounted
 */
     static bool DeviceGetStorageStatusImages(){
-        if(!_d) return false;
-        auto a = _d->download("get_storage_status", "images");
-        return a.startsWith("ok");
+        auto a = _downloadHelper.download("get_storage_status", "images");
+        return a.content.startsWith("ok");
     }
     /*
      * http://10.10.10.150:1997/set_storage_mount?images
 ok
 /mnt/images*/
-    static bool DeviceMountStorageImages(){
-        if(!_d) return false;
-        auto a = _d->download("set_storage_mount", "images");
-        return a.startsWith("ok");
+    static bool DeviceMountStorageImages(){        
+        auto a = _downloadHelper.download("set_storage_mount", "images");
+        return a.content.startsWith("ok");
     }
 
 /*
@@ -200,9 +199,8 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
     };
 
     static CamStatus DeviceGetCamStatus(){
-        if(!_d) return CamStatus{};
-        auto a = _d->download("get_cam_status", "");
-        auto l = a.split(';');
+        auto a = _downloadHelper.download("get_cam_status", "");
+        auto l = a.content.split(';');
         if(l.length()<5) return {};
         CamStatus r;
         r.isOpened = l[0]=="1";
@@ -214,20 +212,20 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
     }
 
     static bool DeviceStartRec(const QString& fn, bool isSync = false){
-        if(!_d) return false;
+        //if(!_d) return false;
         QString q =
             QStringLiteral("videofolder=%1/front_cam&data_mode=0&file_mode=0&sec=10").arg(fn);
         if(isSync) q+="&sync";
-        auto a = _d->download("set_rec_start", q);
-        return a.startsWith("ok");
+        auto a = _downloadHelper.download("set_rec_start", q);
+        return a.content.startsWith("ok");
     }
 
 
 
     static bool DeviceStopRec(){
-        if(!_d) return false;
-        auto a = _d->download("set_rec_stop", "");
-        return a.startsWith("ok");
+        //if(!_d) return false;
+        auto a = _downloadHelper.download("set_rec_stop", "");
+        return a.content.startsWith("ok");
     }
 //    static QByteArray GetPicture()
 //    {
@@ -242,14 +240,14 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
 
     static QString DeviceVersion()
     {
-        if(!_d) return nullptr;
-        return _d->download("version", "");
+        auto r = _downloadHelper.download("version", "");
+        return r.content;
     }
 
     static QString DeviceUpdate()
     {
-        if(!_d) return nullptr;
-        return _d->download("update", "");
+        auto r = _downloadHelper.download("update", "");
+        return r.content;
     }
 
     static QString UploadMetaData(const QString& fn, int len);
