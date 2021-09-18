@@ -47,6 +47,7 @@ public:
     void setUi_TestSyncR(const Camtest::TestSyncR &m);
     void setUi_StopRecSyncR(const Camtest::StopRecSyncR &m);
     void setUi_TestRallR(const Camtest::TestRallR &m);
+
 private slots:
     void on_clicked(QPoint p);
 
@@ -99,6 +100,12 @@ private slots:
     void on_pushButton_p_exp_clicked();
 
     void on_pushButton_m_exp_clicked();
+
+    void on_pushButton_pic1_clicked();
+
+    void on_pushButton_setIso400_clicked();
+
+    void on_pushButton_autoset_clicked();
 
 private:
     Ui::MainWindow *ui;

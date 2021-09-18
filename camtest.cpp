@@ -1,4 +1,5 @@
 #include "camtest.h"
+#include "imagehelper.h"
 #include "networkhelper.h"
 #include "settings.h"
 #include "sqlhelper.h"
@@ -13,7 +14,9 @@
 #include <QSqlQuery>
 #include <QThread>
 #include "common/logger/log.h"
+#include <QImage>
 #include <QUrl>
+#include <QVarLengthArray>
 #include <QtEndian>
 
 extern Settings _settings;
@@ -469,6 +472,13 @@ auto Camtest::GetPicture(bool isMvis)-> QByteArray
     return a.content;
 }
 
+auto Camtest::GetThumbnail()-> QByteArray
+{
+    QString q(QStringLiteral("format=jpeg&mode=0&thumbnail=10"));
+    auto a =  _downloadHelper.download(QStringLiteral("get_pic"), q);
+    return a.content;
+}
+
 
 auto Camtest::GetPixmap(bool isMvis) -> QPixmap
 {
@@ -818,3 +828,269 @@ auto Camtest::TestSync() -> TestSyncR
     NetworkHelper::sendUDP(b, 1998, a);
     return {"test sent"};
 }
+
+
+/**/
+//iso_p
+auto Camtest::setIso(int iso) -> SetIsoR
+{
+    SetIsoR r;
+    static const QString key = nameof(_camSettings.iso);
+    auto isOk = setCamSettings(key,iso);
+
+    if(!isOk){ r.err="setCamSettings unsuccessful"; return r;}
+    int cut = 3;
+
+    const int MAXI = 10;
+    int maxi=0;
+
+    double prev_inputRange=0;
+    int i=0;
+    QElapsedTimer e;
+    do{
+        e.restart();
+        auto data = GetThumbnail();
+        QImage image2;
+        image2.loadFromData(data, "JPG");
+
+        auto d = ImageHelper::BrightnessAndContrast(image2, cut);
+
+        r.ranges.append(d.inputRange);
+        if(d.inputRange>0){
+            if(d.inputRange>prev_inputRange){
+                prev_inputRange = d.inputRange;
+                maxi=0;
+            } else {
+                maxi++;
+                if(maxi>=MAXI) break;
+            }
+        }
+
+        i++;
+        auto t = 16-e.elapsed();
+        if(t>0) QThread::msleep(t);
+    }while(i<100);
+    return r;
+}
+
+auto Camtest::approx(int x0, int x1, int(*set)(int, void*), void* data) -> QList<Iter>
+{
+
+    QList<Iter> r;
+    int x3=x0;
+    int i=0;
+    int y3;
+    do{
+        if(x0!=x1) x3=(x0+x1)/2;
+
+        y3 = set(x3, data);
+
+        r.append({x3,y3});
+
+        if(y3==0){
+            break;
+        } else if(y3==1){
+            x0=x3;
+        } else if(y3==-1){
+            x1=x3;
+        } else {
+            x0=x1=x3;
+        }
+
+        i++;
+    }while(i<100);
+    return r;
+}
+
+
+auto Camtest::approx2(int x0, int x1, int x) -> QList<Iter>
+{
+
+    QList<Iter> r;
+    int x3 = 0;
+    int min_d = 1000000;
+    int i=0;
+    do{
+        x3=(x0+x1)/2;
+
+        int d = x-x3;
+        if(abs(d)<abs(min_d)){
+            min_d = d;
+        } else if (abs(d-min_d)<1) {
+            r.append({x3,-2});
+            break;
+        }
+
+        if(x>x3){
+            r.append({x3,1});
+            x0=x3;
+        } else if(x<x3){
+            r.append({x3,-1});
+            x1=x3;
+        } else {
+            r.append({x3,0});
+            break;
+        }
+        i++;
+    }while(i<100);
+    return r;
+}
+
+
+auto Camtest::setAAA(int iso, void* data)->int
+{
+    static const QString b_key = nameof(_camSettings.brightness);
+    static const QString c_key = nameof(_camSettings.contrast);
+    auto b_isOk=false,c_isOk = false;
+    float cut = 3;
+
+    static int B_MIN = 0;
+    static int B_MAX = 100;
+    static int C_MIN = 0;
+    static int C_MAX = 100;
+    static int STEP = 25;
+    static int ITER = 0;
+
+    static int B_N = B_MAX/STEP;
+    static int C_N = B_MAX/STEP;
+
+    auto data2 = static_cast<AAAdata*>(data);
+
+    if(data2->iso == iso){
+
+        switch(ITER){
+        case 0:
+            STEP = 5;
+            break;
+        case 1:
+            STEP = 1;
+            break;
+        default: return 0;
+        }
+        B_MIN = data2->brightness-STEP;
+        B_MAX = data2->brightness+STEP;
+        C_MIN = data2->contrast-STEP;
+        C_MAX = data2->contrast+STEP;
+        if(B_MIN<0) B_MIN=0;
+        if(B_MAX>100) B_MAX=100;
+        if(C_MIN<0) C_MIN=0;
+        if(C_MAX>100) C_MAX=100;
+        B_N = B_MAX/STEP;
+        C_N = B_MAX/STEP;
+        ITER++;
+    }
+    else{
+        b_isOk = setCamSettings(b_key,50);
+        c_isOk = setCamSettings(c_key,50);
+        auto r = Camtest::setIso(iso);
+        if(r.ranges.isEmpty()) return -1;
+
+        ITER = 0;
+        B_MIN = 0;
+        B_MAX = 100;
+        C_MIN = 0;
+        C_MAX = 100;
+        STEP = 25;
+    }
+
+    QElapsedTimer e;         
+
+    QVarLengthArray<ImageHelper::BCdata> ds;
+    ds.reserve((B_N+1)*(C_N+1));
+
+    for(int b=B_MIN;b<=B_MAX;b+=STEP){
+        b_isOk = setCamSettings(b_key,b);
+        QThread::msleep(3);
+        if(!b_isOk) break;
+        for(int c=C_MIN;c<=C_MAX;c+=STEP){
+            e.restart();
+            c_isOk = setCamSettings(c_key,c);
+            QThread::msleep(3);
+            if(!c_isOk) break;
+
+            auto data = GetThumbnail();
+            if(data.length()<100) break;
+            QImage image2;
+            image2.loadFromData(data, "JPG");
+            //volatile auto x = image2.size();
+            auto d = ImageHelper::BrightnessAndContrast(image2, cut);
+
+            d.brightness = b;
+            d.contrast = c;
+            d.iso = iso;
+            d.ix = ds.count();
+
+            ds.append(d);
+
+            auto t = 16-e.elapsed();
+            if(t>0) QThread::msleep(t);
+        }
+    }
+
+    //ImageHelper::BCdata d_max={};
+    double max_inputRange = -100000000;
+    int maxix = -1;
+
+    QList<ImageHelper::BCdata> valids;
+    for(int i=0;i<ds.count();i++){
+        auto a = ds[i];
+        if(a.inputRange>250 && a.alpha<1.1 && a.beta<1){
+            valids.append(a);
+        }
+        if(a.inputRange>max_inputRange){
+            max_inputRange = a.inputRange;
+            maxix=i;
+        }
+    }
+
+
+    auto d_max = ds[maxix];
+
+    double prange = data2->range;
+    if(valids.isEmpty()){        
+        data2->range = d_max.inputRange;
+        data2->brightness = d_max.brightness;
+        data2->contrast = d_max.contrast;
+        data2->iso = d_max.iso;
+        data2->n = 0;
+    }
+    else{
+        int c0=0, b0=0;
+        for(auto a: valids){
+            b0+=a.brightness;
+            c0+=a.contrast;
+        }
+        data2->n = valids.count();
+        data2->range = d_max.inputRange;
+        data2->brightness = b0/data2->n;
+        data2->contrast = c0/data2->n;
+        data2->iso = d_max.iso;
+    }
+
+    if(std::abs(prange-d_max.inputRange)<1){
+        return (ITER<2)?-2:0;
+    }
+
+    if(valids.count()<1) {
+       // ITER=0;
+        return 1;
+    }
+    if(valids.count()>10) {
+     //   ITER=0;
+        return -1;
+    }
+    return (ITER<2)?-2:0;
+};
+
+//auto Camtest::isOkAAA(int i)->int
+//{
+
+//}
+
+//void Camtest::setBrightness(int i){
+
+//}
+
+//void Camtest::setContrast(int i){
+
+//}

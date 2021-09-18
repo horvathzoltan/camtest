@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "camtest.h"
+#include "imagehelper.h"
 #include "common/macrofactory/macro.h"
 #include "common/logger/log.h"
 //#include "common/helper/downloader/downloader.h"
@@ -8,6 +9,7 @@
 #include <QPixmap>
 #include <QtMath>
 #include <Qt>
+#include <QElapsedTimer>
 #include "raspicamtypes.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -463,4 +465,149 @@ void MainWindow::on_pushButton_m_exp_clicked()
     auto r = Camtest::exposure_m();
     setLabelExp(r);
 }
+
+
+void MainWindow::on_pushButton_pic1_clicked()
+{
+    auto image2 = ui->label_pic->pixmap(Qt::ReturnByValue).toImage();
+
+    //QPixmap p2  = QPixmap::fromImage(image);
+    ui->label_pic2->setPixmap(QPixmap::fromImage(image2));
+
+    //QPixmap p3  = QPixmap::fromImage(image);
+
+    int cut = 3;
+    QImage image3 = ImageHelper::BrightnessAndContrastAuto(image2, cut);
+
+    auto d = ImageHelper::BrightnessAndContrast(image2, cut);
+                                       /*,&a, &b,
+                                       &minG, &maxG,
+                                       &inputRange);*/
+
+    QString msg = QStringLiteral("a:%1\nb:%2\n(%3-%4)\nr:%5")
+                      .arg(d.alpha).arg(d.beta)
+                      .arg(d.minGray).arg(d.maxGray)
+                      .arg(d.inputRange);
+    ui->label_picparam->setText(msg);
+    ui->label_pic3->setPixmap(QPixmap::fromImage(image3));
+}
+
+
+/*
+kettes buttony:
+
+kell csinálni 2 ciklust, b, és c mint brightness, contrast, 0-100 (kamera min->max)
+
+minden iterációban meglesz a b, a c és a range
+
+rakunk egy külső ciklust: az lesz az iso-
+
+az iso akkor jó, ha a legkevesebb 256 range van
+
+és keressük azt a legnagyobb isot ahol a kivezéslés jó
+és a jó kivezérlésű ponthoz tartozó b és c kell.
+
+
+
+*/
+
+void MainWindow::on_pushButton_setIso400_clicked()
+{
+    QString msg = QStringLiteral("set iso start");
+    int iso = 400;
+
+    auto r  = Camtest::setIso(iso);
+    if(!r.err.isEmpty()){
+        ui->label_msg->setText(r.err);
+        return;
+    }
+    msg = QStringLiteral("set iso=%1 iterations:%2").arg(iso).arg(r.ranges.count());
+    if(!r.ranges.isEmpty()){
+        if(r.ranges.count()>=100) msg += " !!!MAX!!!";
+        QString msg2;
+
+        for(int i=0;i<r.ranges.count();i++){
+            auto&a=r.ranges[i];
+            if(!msg2.isEmpty()) msg2+=',';
+            if(i>0&&!(i%15)) msg2+="\n";
+            msg2+=QString::number(a);
+        }
+        msg+="\n"+msg2;
+    }
+    ui->label_msg->setText(msg);
+
+}
+
+
+
+
+void MainWindow::on_pushButton_autoset_clicked()
+{
+    QString msg = QStringLiteral("start approx");
+    ui->label_msg->setText(msg);
+
+    QElapsedTimer t;
+    t.start();
+    Camtest::OpenCamera();
+    //bool ok = false;
+
+
+    int x0 = 100;
+    int x1 = 800;
+    //int y = 250;
+
+    Camtest::AAAdata aaadata={};
+
+    auto r = Camtest::approx(x0,x1, &Camtest::setAAA, &aaadata);
+
+    msg = QStringLiteral("approx: %0[%2;%3] %4[ms]")
+              .arg(250).arg(x0).arg(x1).arg(t.elapsed());
+
+    if(!r.isEmpty()){
+        if(r.count()>=100) msg += " !!!MAX!!!";
+        QString msg2;
+
+        for(int i=0;i<r.count();i++){
+            auto&a=r[i];
+            if(!msg2.isEmpty()) msg2+=", ";
+            if(i>0&&!(i%4)) msg2+="\n";
+            msg2+=QString::number(a.x3)+"_"+
+                QString::number(a.flag);
+        }
+        msg+="\n"+msg2;
+    }
+
+    msg+=QStringLiteral("\nb: %1 c: %2 iso: %3 n: %4 r: %5")
+               .arg(aaadata.brightness)
+               .arg(aaadata.contrast)
+               .arg(aaadata.iso)
+               .arg(aaadata.n)
+               .arg(aaadata.range);
+
+    static const QString b_key = "brightness";
+    static const QString c_key = "contrast";
+    static const QString i_key = "iso";
+
+    int u = aaadata.iso;
+    bool isOk = Camtest::setCamSettings(i_key,u);
+    if(isOk) Camtest::_camSettings.iso = u;
+    setLabelISO(u);
+
+    u = aaadata.brightness;
+    isOk = Camtest::setCamSettings(b_key,u);
+    if(isOk) Camtest::_camSettings.brightness = u;
+    setLabelB(u);
+
+    u = aaadata.contrast;
+    isOk = Camtest::setCamSettings(c_key,u);
+    if(isOk) Camtest::_camSettings.contrast = u;
+    setLabelC(u);
+
+    ui->label_msg->setText(msg);
+}
+
+
+
+
+//
 

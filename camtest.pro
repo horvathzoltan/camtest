@@ -72,6 +72,8 @@ LIBS += -L$$COMMON_LIBS_FULLPATH/ -ldownloadhelper
 LIBS += -L$$COMMON_LIBS_FULLPATH/ -lprocesshelper
 LIBS += -L$$COMMON_LIBS_FULLPATH/ -lmacrofactory
 
+#LIBS += -lopencv
+
 #LIBS += -L$$COMMON_LIBS_FULLPATH/ -linihelper
 #LIBS += -L$$COMMON_LIBS_FULLPATH/ -lsettingshelper
 #LIBS += -L$$COMMON_LIBS_FULLPATH/ -lxmlhelper
@@ -89,9 +91,28 @@ LIBS += -L$$COMMON_LIBS_FULLPATH/ -lmacrofactory
 INCLUDEPATH += $$HOME/common
 DEPENDPATH += $$HOME/common
 
+INCLUDEPATH += /usr/local/include/opencv4
+LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc
+#-lopencv_dnn
+#-lopencv_gapi
+#-lopencv_highgui
+#-lopencv_ml
+#-lopencv_objdetect
+#-lopencv_photo
+#-lopencv_stitching
+#-lopencv_video
+#-lopencv_videoio
+#-lopencv_imgcodecs
+#-lopencv_calib3d
+#-lopencv_features2d
+#-lopencv_flann
+
+
+
 SOURCES += \
     camtest.cpp \
     downloadhelper.cpp \
+    imagehelper.cpp \
     labeleventfilter.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -102,6 +123,7 @@ SOURCES += \
 HEADERS += \
     camtest.h \
     downloadhelper.h \
+    imagehelper.h \
     labeleventfilter.h \
     mainwindow.h \
     networkhelper.h \
