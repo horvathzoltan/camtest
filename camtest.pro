@@ -110,6 +110,7 @@ LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc
 
 
 SOURCES += \
+    cameraautoset.cpp \
     camtest.cpp \
     downloadhelper.cpp \
     imagehelper.cpp \
@@ -121,6 +122,7 @@ SOURCES += \
     sqlhelper.cpp
 
 HEADERS += \
+    cameraautoset.h \
     camtest.h \
     downloadhelper.h \
     imagehelper.h \

@@ -11,6 +11,7 @@
 #include <Qt>
 #include <QElapsedTimer>
 #include "raspicamtypes.h"
+#include "cameraautoset.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -543,67 +544,87 @@ void MainWindow::on_pushButton_setIso400_clicked()
 
 void MainWindow::on_pushButton_autoset_clicked()
 {
-    QString msg = QStringLiteral("start approx");
-    ui->label_msg->setText(msg);
+    //QString msg = QStringLiteral("start approx");
+    ui->label_msg->setText(QStringLiteral("start approx"));
 
-    QElapsedTimer t;
-    t.start();
-    Camtest::OpenCamera();
-    //bool ok = false;
-
-
-    int x0 = 100;
-    int x1 = 800;
-    //int y = 250;
-
-    Camtest::AAAdata aaadata={};
-
-    auto r = Camtest::approx(x0,x1, &Camtest::setAAA, &aaadata);
-
-    msg = QStringLiteral("approx: %0[%2;%3] %4[ms]")
-              .arg(250).arg(x0).arg(x1).arg(t.elapsed());
-
-    if(!r.isEmpty()){
-        if(r.count()>=100) msg += " !!!MAX!!!";
-        QString msg2;
-
-        for(int i=0;i<r.count();i++){
-            auto&a=r[i];
-            if(!msg2.isEmpty()) msg2+=", ";
-            if(i>0&&!(i%4)) msg2+="\n";
-            msg2+=QString::number(a.x3)+"_"+
-                QString::number(a.flag);
-        }
-        msg+="\n"+msg2;
-    }
-
-    msg+=QStringLiteral("\nb: %1 c: %2 iso: %3 n: %4 r: %5")
-               .arg(aaadata.brightness)
-               .arg(aaadata.contrast)
-               .arg(aaadata.iso)
-               .arg(aaadata.n)
-               .arg(aaadata.range);
+    auto r = CameraAutoSet::AutosetStart();
 
     static const QString b_key = "brightness";
     static const QString c_key = "contrast";
     static const QString i_key = "iso";
 
-    int u = aaadata.iso;
+    int u = r.iso;
     bool isOk = Camtest::setCamSettings(i_key,u);
     if(isOk) Camtest::_camSettings.iso = u;
     setLabelISO(u);
 
-    u = aaadata.brightness;
+    u = r.brightness;
     isOk = Camtest::setCamSettings(b_key,u);
     if(isOk) Camtest::_camSettings.brightness = u;
-    setLabelB(u);
 
-    u = aaadata.contrast;
+     u = r.contrast;
     isOk = Camtest::setCamSettings(c_key,u);
     if(isOk) Camtest::_camSettings.contrast = u;
     setLabelC(u);
 
-    ui->label_msg->setText(msg);
+//    QElapsedTimer t;
+//    t.start();
+//    Camtest::OpenCamera();
+//    //bool ok = false;
+
+
+//    int x0 = 100;
+//    int x1 = 800;
+//    //int y = 250;
+
+//    Camtest::AAAdata aaadata={};
+
+//    auto r = Camtest::approx(x0,x1, &Camtest::setAAA, &aaadata);
+
+//    msg = QStringLiteral("approx: %0[%2;%3] %4[ms]")
+//              .arg(250).arg(x0).arg(x1).arg(t.elapsed());
+
+//    if(!r.isEmpty()){
+//        if(r.count()>=100) msg += " !!!MAX!!!";
+//        QString msg2;
+
+//        for(int i=0;i<r.count();i++){
+//            auto&a=r[i];
+//            if(!msg2.isEmpty()) msg2+=", ";
+//            if(i>0&&!(i%4)) msg2+="\n";
+//            msg2+=QString::number(a.x3)+"_"+
+//                QString::number(a.flag);
+//        }
+//        msg+="\n"+msg2;
+//    }
+
+//    msg+=QStringLiteral("\nb: %1 c: %2 iso: %3 n: %4 r: %5")
+//               .arg(aaadata.brightness)
+//               .arg(aaadata.contrast)
+//               .arg(aaadata.iso)
+//               .arg(aaadata.n)
+//               .arg(aaadata.range);
+
+//    static const QString b_key = "brightness";
+//    static const QString c_key = "contrast";
+//    static const QString i_key = "iso";
+
+//    int u = aaadata.iso;
+//    bool isOk = Camtest::setCamSettings(i_key,u);
+//    if(isOk) Camtest::_camSettings.iso = u;
+//    setLabelISO(u);
+
+//    u = aaadata.brightness;
+//    isOk = Camtest::setCamSettings(b_key,u);
+//    if(isOk) Camtest::_camSettings.brightness = u;
+//    setLabelB(u);
+
+//    u = aaadata.contrast;
+//    isOk = Camtest::setCamSettings(c_key,u);
+//    if(isOk) Camtest::_camSettings.contrast = u;
+//    setLabelC(u);
+
+    ui->label_msg->setText(r.msg);
 }
 
 

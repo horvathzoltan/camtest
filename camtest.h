@@ -142,6 +142,9 @@ public:
 
     static TestRallR TestCall(const QString &p, const QString &u);
 
+    static QByteArray GetPicture(bool isMvis);
+    static QByteArray GetThumbnail();
+
 
 private:
     static bool DeviceUpdateStorageStatus()
@@ -235,8 +238,6 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
 
 
 
-    static QByteArray GetPicture(bool isMvis);
-    static QByteArray GetThumbnail();
 
 
     static QString DeviceVersion()
@@ -264,6 +265,7 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
     };
 
 public:
+
     struct SetIsoR{
         QList<int> ranges;
         QString err;
@@ -273,23 +275,7 @@ public:
     //static void setContrast(int i);
 
     /*iteration*/
-    struct Iter{
-        int x3;
-        int flag;
-    };
 
-    struct AAAdata{
-        int brightness;
-        int contrast;
-        int iso;
-        int range;
-        int n;
-    };
-
-    static int setAAA(int i, void* data);
-
-    static QList<Iter> approx(int x0, int x1, int(*set)(int,void* data), void* data);
-    static QList<Iter> approx2(int x0, int x1, int x);
     //static int isOkAAA(int i);
 };
 

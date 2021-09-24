@@ -163,8 +163,10 @@ auto ImageHelper::BrightnessAndContrast(const cv::Mat &src, float clipHistPercen
     // current range
     d.inputRange = d.maxGray - d.minGray;
 
-    d.alpha = (histSize - 1) / (d.inputRange);   // alpha expands current range to histsize range
-    d.beta = -(d.minGray) * (d.alpha);             // beta shifts current range so that minGray will go to 0
+    if(d.inputRange){
+        d.alpha = (histSize - 1) / (d.inputRange);   // alpha expands current range to histsize range
+        d.beta = -(d.minGray) * (d.alpha);             // beta shifts current range so that minGray will go to 0
+    }
 
     return d;
 }
