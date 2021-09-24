@@ -873,10 +873,23 @@ auto Camtest::setIso(int iso) -> SetIsoR
     return r;
 }
 
-//auto Camtest::isOkAAA(int i)->int
-//{
-
-//}
+auto Camtest::SetCamAuto() -> SetCamAutoR
+{
+    SetCamAutoR r;
+    auto response = _downloadHelper.download(QStringLiteral("set_cam_auto"), "");
+    if(!response.content.isEmpty()){
+        if(!r.msg.isEmpty()) r.msg+='\n';
+        r.msg+="content: "+response.content;
+    }
+    if(!response.errmsg.isEmpty()){
+        if(!r.msg.isEmpty()) r.msg+='\n';
+        r.msg+="err: "+response.errmsg;
+    }
+    auto isOk = GetCamSettings();
+    if(!r.msg.isEmpty()) r.msg+='\n';
+    r.msg+=QStringLiteral("settings: ")+ ((isOk)?"\nok":"\nfailed");
+    return r;
+}
 
 //void Camtest::setBrightness(int i){
 

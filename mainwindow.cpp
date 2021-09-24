@@ -632,3 +632,15 @@ void MainWindow::on_pushButton_autoset_clicked()
 
 //
 
+
+void MainWindow::on_pushButton_setcamauto_clicked()
+{
+    ui->label_msg->setText("SetCamAuto..");
+    auto r = Camtest::SetCamAuto();
+    setUi_SetCamAuto(r);
+
+}
+
+void MainWindow::setUi_SetCamAuto(const Camtest::SetCamAutoR& r){
+     ui->label_msg->setText(r.msg);
+}

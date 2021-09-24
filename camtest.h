@@ -277,6 +277,11 @@ public:
     /*iteration*/
 
     //static int isOkAAA(int i);
+    struct SetCamAutoR{
+        QString msg;
+    };
+
+    static SetCamAutoR SetCamAuto();
 };
 
 
