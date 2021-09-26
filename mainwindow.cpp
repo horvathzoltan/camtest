@@ -489,8 +489,12 @@ void MainWindow::on_pushButton_pic1_clicked()
                       .arg(d.alpha).arg(d.beta)
                       .arg(d.minGray).arg(d.maxGray)
                       .arg(d.inputRange);
+
     ui->label_picparam->setText(msg);
-    ui->label_pic3->setPixmap(QPixmap::fromImage(image3));
+
+    auto pixmap3 = QPixmap::fromImage(image3);
+
+    ui->label_pic3->setPixmap(pixmap3);
 }
 
 
