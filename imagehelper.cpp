@@ -97,7 +97,8 @@ auto ImageHelper::BrightnessAndContrast(const QImage &src,
                                         ) -> BCdata{
 
     cv::Mat m1 = QImage2MatCopy(src);
-    return BrightnessAndContrast(m1, clipHistPercent);//, alpha, beta, minG, maxG,inputRange);
+    auto pic =  BrightnessAndContrast(m1, clipHistPercent);//, alpha, beta, minG, maxG,inputRange);
+    return pic;
 }
 
 auto ImageHelper::BrightnessAndContrast(const cv::Mat &src, float clipHistPercent
@@ -177,7 +178,7 @@ QImage ImageHelper::BrightnessAndContrastAuto(const QImage& src, float clipHistP
     cv::Mat m2;//(m1.cols, m1.rows, m1.type());
     BrightnessAndContrastAuto(m1,m2,clipHistPercent);
 
-    QImage i = Mat2QImageRef(m2);
+    QImage i = Mat2QImageCopy(m2);
     return i;
 }
 
