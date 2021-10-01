@@ -11,6 +11,7 @@ public:
     bool eventFilter(QObject *watched, QEvent *event);
 signals:
     void clicked(const QPoint&);
+    void moved(const QPoint&);
 };
 
 #endif // LABELEVENTFILTER_H

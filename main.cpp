@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+//#include "mousemovesignaler.h"
 #include "settings.h"
 #include "common/logger/log.h"
 #include <QApplication>
@@ -29,6 +30,8 @@ Settings _settings(
         "sa",
         "Gtr7jv8fh2"
     } );
+
+//MouseMoveSignaler mouse_move_signaler;
 
 
 auto main(int argc, char *argv[]) -> int

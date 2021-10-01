@@ -10,6 +10,7 @@
 #include <QtMath>
 #include <Qt>
 #include <QElapsedTimer>
+#include <QPainter>
 #include "raspicamtypes.h"
 #include "cameraautoset.h"
 
@@ -24,8 +25,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->label_pic->installEventFilter( this );
     _eventFilter = new LabelEventFilter();//, clicked);
     connect(_eventFilter, &LabelEventFilter::clicked, this, &MainWindow::on_clicked);
-    ui->label_pic->installEventFilter(_eventFilter);
+    connect(_eventFilter, &LabelEventFilter::moved, this, &MainWindow::on_moved);
+    ui->label_pic->installEventFilter(_eventFilter);    
 }
+
 
 void MainWindow::on_clicked(QPoint p)
 {
@@ -34,17 +37,30 @@ void MainWindow::on_clicked(QPoint p)
     else if(ui->radioButton_f->isChecked()) on_f_clicked(p);
 }
 
+void MainWindow::on_moved(QPoint p)
+{
+    if(ui->radioButton_fc->isChecked()) {}
+    else if(ui->radioButton_d->isChecked()) {}
+    else if(ui->radioButton_f->isChecked()) on_f_moved(p);
+}
+
 void MainWindow::on_fc_clicked(const QPoint &p)
 {
-        QPixmap pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
-    //if(!pix) return;
-    auto img = pix.toImage();
+//    QPixmap pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
+
+    auto img = pixmap.toImage();
     auto c = img.pixelColor(p);
     auto txt = c.name();
     ui->label_rgb->setText(txt);
 }
 
-
+void MainWindow::Draw(){
+    QPainter painter(this);
+    painter.begin(_pixmap_f);
+    painter.setPen(Qt::red);
+    painter.drawLine(0,0,_pixmap_f->width(), _pixmap_f->height());
+    painter.end();
+}
 
 void MainWindow::on_d_clicked(const QPoint& p)
 {
@@ -54,12 +70,15 @@ void MainWindow::on_d_clicked(const QPoint& p)
     {
     case 0:
     {
-        auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
+        if(!_pixmap2){
+            _pixmap2=new  QPixmap();
+        }
+        //auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
         //auto pix = ui->label_pic->pixmap();
 
         _d_status->round=1;
         _d_status->p0=p;
-        _d_status->w = pix.width();
+        _d_status->w = pixmap.width();
         break;
     }
     case 1:
@@ -78,20 +97,39 @@ void MainWindow::on_d_clicked(const QPoint& p)
     }
 }
 
+void MainWindow::on_f_moved(const QPoint& p){
+    ui->label_msg->setText(QStringLiteral("on_f_moved: %1,%2").arg(p.x()).arg(p.y()));
+
+    if(_d_status){
+        switch(_d_status->round){
+        case 1:{
+            QPainter painter;
+            painter.begin(_pixmap2);
+            painter.setPen(Qt::darkGreen);
+            painter.drawRect(QRect {_d_status->p0, p});
+                 break;
+             }
+        }
+    }
+}
+
 void MainWindow::on_f_clicked(const QPoint& p)
 {
+    ui->label_msg->setText(QStringLiteral("on_f_clicked: %1,%2").arg(p.x()).arg(p.y()));
     if(!_d_status) _d_status = new DStatus();
 
     switch(_d_status->round)
     {
     case 0:
     {
+        _pixmap_f->fill();
+        //_pixmap2 = new
         //auto pix = ui->label_pic->pixmap();
-        auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
+        //auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
 
         _d_status->round=1;
         _d_status->p0=p;
-        _d_status->w = pix.width();
+        _d_status->w = pixmap.width();
         break;
     }
     case 1:
@@ -99,6 +137,13 @@ void MainWindow::on_f_clicked(const QPoint& p)
         _d_status->round=2;
         _d_status->p1=p;
 
+        QPainter painter;
+        painter.begin(_pixmap_f);
+        painter.setPen(Qt::green);
+        painter.drawRect(QRect {_d_status->p0, _d_status->p1});
+//        painter.drawRect(_d_status->p0.x(), _d_status->p0.y(),
+//                         _d_status->p1.x(), _d_status->p1.y());
+        painter.end();
         if(SetCamF())
         {
             delete _d_status;
@@ -178,6 +223,7 @@ bool MainWindow::SetCamF()
 
 MainWindow::~MainWindow()
 {
+    delete _pixmap2;
     delete _eventFilter;
     delete ui;
     delete timer;
@@ -198,11 +244,21 @@ void MainWindow::on_radioButton_stop_clicked()
 }
 
 void MainWindow::on_timerTimeout()
-{
-    auto p = Camtest::GetPixmap(ui->checkBox_mvis->isChecked());
-    if(!p.isNull())
-    {        
-        ui->label_pic->setPixmap(p);
+{    
+    pixmap = Camtest::GetPixmap(ui->checkBox_mvis->isChecked());
+
+    if(!pixmap.isNull())
+    {
+        if(_pixmap2||_pixmap_f){
+            QPainter paint(&pixmap);
+            if(_pixmap2) paint.drawPixmap(0, 0, *_pixmap2);
+            if(_pixmap_f) paint.drawPixmap(0, 0, *_pixmap_f);
+        } else {
+            if(!_pixmap2) _pixmap2 = new QPixmap(pixmap.size());
+            if(!_pixmap_f) _pixmap_f = new QPixmap(pixmap.size());
+        }
+
+        ui->label_pic->setPixmap(pixmap);
     }
     else
     {
@@ -238,6 +294,7 @@ void MainWindow::setUi_StopR(const Camtest::StopR& m){
     Q_UNUSED(m)
 
     timer->stop();
+    delete _pixmap2;
     //ui->label_txt->setText("");
     //ui->label_serial->setText("");
     if(_camera_active)
@@ -470,7 +527,7 @@ void MainWindow::on_pushButton_m_exp_clicked()
 
 void MainWindow::on_pushButton_pic1_clicked()
 {
-    auto image2 = ui->label_pic->pixmap(Qt::ReturnByValue).toImage();
+    auto image2 = pixmap.toImage();
 
     //QPixmap p2  = QPixmap::fromImage(image);
     ui->label_pic2->setPixmap(QPixmap::fromImage(image2));

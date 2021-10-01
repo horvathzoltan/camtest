@@ -42,14 +42,24 @@ public:
     void on_d_clicked(const QPoint &p);
     bool SetCamD();
     void on_f_clicked(const QPoint &p);
+    void on_f_moved(const QPoint &p);
     bool SetCamF();
 
     void setUi_TestSyncR(const Camtest::TestSyncR &m);
     void setUi_StopRecSyncR(const Camtest::StopRecSyncR &m);
     void setUi_TestRallR(const Camtest::TestRallR &m);
     void setUi_SetCamAuto(const Camtest::SetCamAutoR &m);
+
+    struct DrawData{
+        QRectF f;
+    };
+
+    DrawData drawdata;
+
+    void Draw();
 private slots:
     void on_clicked(QPoint p);
+    void on_moved(QPoint p);
 
     void on_radioButton_start_clicked();
 
@@ -114,6 +124,10 @@ private:
     QTimer *timer;
     LabelEventFilter* _eventFilter;
     DStatus* _d_status=nullptr;
+    QPixmap pixmap;
+    QPixmap* _pixmap_f=nullptr;
+    QPixmap* _pixmap2=nullptr;
+
     bool _camera_active;
     void setUi_StartR(const Camtest::StartR&);
     void setUi_StopR(const Camtest::StopR&);
