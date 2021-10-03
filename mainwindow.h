@@ -119,6 +119,8 @@ private slots:
 
     void on_pushButton_setcamauto_clicked();
 
+    void on_pushButton_update4_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *timer;

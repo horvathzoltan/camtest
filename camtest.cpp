@@ -606,6 +606,47 @@ auto Camtest::Update() -> Camtest::UpdateR
     return {isok, msg};
 }
 
+auto Camtest::Update4() -> Camtest::UpdateR
+{
+    QString msg;
+
+    auto a = DeviceActive();
+    if(!a)
+    {
+        com::helper::StringHelper::AppendLine(&msg, QStringLiteral("not active"));
+        return {false, msg};
+    }
+
+    auto v_old = DeviceVersion();
+
+    append_value(&msg, v_old);
+
+    auto updstatus = DeviceUpdateStorageStatus();
+    if(!updstatus) updstatus=DeviceMountStorage();
+    if(!updstatus){
+        com::helper::StringHelper::AppendLine(&msg, QStringLiteral("cannot mount"));
+        return {false, msg};
+    }
+
+    DeviceUpdate4();
+
+    int i;
+    QString v_new;
+    bool isok;
+    for(i=0;i<10;i++)
+    {
+        QThread::sleep(3);
+        v_new = DeviceVersion();
+        if(v_new.isEmpty()) continue;
+        isok = v_new!=v_old;
+        if(isok) break;
+    }
+
+    append_value(&msg, v_new);
+    append_value(&msg, i);
+
+    return {isok, msg};
+}
 
 auto Camtest::Restart() -> Camtest::RestartR
 {
@@ -734,11 +775,11 @@ auto Camtest::StartRecSync() -> Camtest::StartRecSyncR
         }
     }
 
-    status = DeviceGetCamStatus();
-    if(status.isRec) AppendLine(&r.msg,
-                   QStringLiteral("recording in progress"));
-    if(status.isActive) AppendLine(&r.msg,
-                   QStringLiteral("recording timer is active"));
+//    status = DeviceGetCamStatus();
+//    if(status.isRec) AppendLine(&r.msg,
+//                   QStringLiteral("recording in progress"));
+//    if(status.isActive) AppendLine(&r.msg,
+//                   QStringLiteral("recording timer is active"));
     AppendLine(&r.msg, fn);
     AppendLine(&r.msg, timestampMs);
 

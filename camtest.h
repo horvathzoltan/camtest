@@ -252,6 +252,12 @@ isOpened;isGrabOk;isOpenOk;isRec;isActive;count;interval;total;free
         return r.content;
     }
 
+    static QString DeviceUpdate4()
+    {
+        auto r = _downloadHelper.download("update4", "");
+        return r.content;
+    }
+
     static QString UploadMetaData(const QString& fn, int len);
     static void UploadData(const QString& key, const QByteArray& a);
     static int UploadNext(const QString& key);
@@ -282,6 +288,7 @@ public:
     };
 
     static SetCamAutoR SetCamAuto();
+    static Camtest::UpdateR Update4();
 };
 
 

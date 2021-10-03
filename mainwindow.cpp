@@ -122,7 +122,7 @@ void MainWindow::on_f_clicked(const QPoint& p)
     {
     case 0:
     {
-        _pixmap_f->fill();
+        //_pixmap_f->fill(QT_Transpa);
         //_pixmap2 = new
         //auto pix = ui->label_pic->pixmap();
         //auto pix = ui->label_pic->pixmap(Qt::ReturnByValueConstant::ReturnByValue);
@@ -251,11 +251,13 @@ void MainWindow::on_timerTimeout()
     {
         if(_pixmap2||_pixmap_f){
             QPainter paint(&pixmap);
-            if(_pixmap2) paint.drawPixmap(0, 0, *_pixmap2);
-            if(_pixmap_f) paint.drawPixmap(0, 0, *_pixmap_f);
+            if(_pixmap2 && !_pixmap2->isNull()) paint.drawPixmap(0, 0, *_pixmap2);
+            if(_pixmap_f && !_pixmap_f->isNull()) paint.drawPixmap(0, 0, *_pixmap_f);
         } else {
             if(!_pixmap2) _pixmap2 = new QPixmap(pixmap.size());
             if(!_pixmap_f) _pixmap_f = new QPixmap(pixmap.size());
+            _pixmap2->fill(Qt::transparent);
+            _pixmap_f->fill(Qt::transparent);
         }
 
         ui->label_pic->setPixmap(pixmap);
@@ -294,7 +296,8 @@ void MainWindow::setUi_StopR(const Camtest::StopR& m){
     Q_UNUSED(m)
 
     timer->stop();
-    delete _pixmap2;
+    delete _pixmap2; _pixmap2 = nullptr;
+    delete _pixmap_f; _pixmap_f = nullptr;
     //ui->label_txt->setText("");
     //ui->label_serial->setText("");
     if(_camera_active)
@@ -380,11 +383,6 @@ void MainWindow::on_pushButton_wbm_clicked()
     setLabelWB(Camtest::wb_m());
 }
 
-void MainWindow::on_pushButton_update_clicked()
-{
-    setUi_UpdateR(Camtest::Update());
-}
-
 void MainWindow::setUi_UpdateR(const Camtest::UpdateR& m){
 
     ui->label_msg->setText((m.isOk?"ok\n":"error\n")+m.msg);
@@ -462,25 +460,49 @@ void MainWindow::on_pushButton_stop_clicked()
     setUi_StopRec(m);
 }
 
-
-void MainWindow::on_pushButton_sync_rec_clicked()
-{
-    auto m = Camtest::StartRecSync();
-    setUi_StartRecSyncR(m);
-}
-
-
 void MainWindow::on_pushButton_clicked()
 {
     auto m = Camtest::TestSync();
     setUi_TestSyncR(m);
 }
 
+static bool lock_Start = false;
+static bool lock_Stop = false;
+void MainWindow::on_pushButton_sync_rec_clicked()
+{
+    if(lock_Start)   {
+        setUi_StartRecSyncR({"StartRecSync locked"});
+        return;
+    }
+    if(lock_Start) {
+        setUi_StartRecSyncR({"StartRecSync locked"});
+        return;
+    }
+    lock_Start = true;
+    ui->pushButton_sync_stop->setEnabled(false);
+    auto m = Camtest::StartRecSync();
+    setUi_StartRecSyncR(m);
+    ui->pushButton_sync_stop->setEnabled(true);
+    lock_Start = false;
+}
 
 void MainWindow::on_pushButton_sync_stop_clicked()
 {
+    //static bool lock = false;
+    if(lock_Start)   {
+        setUi_StartRecSyncR({"StartRecSync locked"});
+        return;
+    }
+    if(lock_Stop){
+        setUi_StartRecSyncR({"StopRecSync locked"});
+        return;
+    }
+    lock_Stop = true;
+    ui->pushButton_sync_rec->setEnabled(false);
     auto m = Camtest::StopRecSync();
     setUi_StopRecSyncR(m);
+    ui->pushButton_sync_rec->setEnabled(true);
+    lock_Stop = false;
 }
 
 
@@ -705,3 +727,14 @@ void MainWindow::on_pushButton_setcamauto_clicked()
 void MainWindow::setUi_SetCamAuto(const Camtest::SetCamAutoR& r){
      ui->label_msg->setText(r.msg);
 }
+
+void MainWindow::on_pushButton_update_clicked()
+{
+    setUi_UpdateR(Camtest::Update());
+}
+
+void MainWindow::on_pushButton_update4_clicked()
+{
+    setUi_UpdateR(Camtest::Update4());
+}
+
